@@ -315,30 +315,30 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    CJ["Circuit JSON"] --> NL["Netlist Generator"]
-    CJ --> ML["Model Library"]
+    CJ[Circuit JSON] --> NL[Netlist Generator<br/>netlist_generator.py]
+    CJ --> ML[Model Library<br/>model_library.py]
 
-    NL --> PR["Pin Reordering\nMOSFET: D/G/S/B\nBJT: C/B/E\nDiode: A/K"]
-    NL --> PSD["Power Source Detection\nNet to Voltage mapping"]
-    NL --> GD["Ground Detection\nStructured patterns"]
+    NL --> PR[Pin Reordering<br/>MOSFET: D/G/S/B<br/>BJT: C/B/E<br/>Diode: A/K]
+    NL --> PS[Power Source Detection<br/>Net → Voltage mapping]
+    NL --> GD[Ground Detection<br/>Structured patterns]
 
-    ML --> BM["Behavioral Models\nTPS54331, AMS1117,\nIR2110, AD9833..."]
-    ML --> PMD["Passive Models\nNTC, Potentiometer,\nFerrite Bead"]
-    ML --> CMD["Connector Models\nPin passthrough"]
+    ML --> BM[Behavioral Models<br/>TPS54331, AMS1117,<br/>IR2110, AD9833...]
+    ML --> PM[Passive Models<br/>NTC, Potentiometer,<br/>Ferrite Bead]
+    ML --> CM[Connector Models<br/>Pin passthrough]
 
-    PR --> CIR[".cir Netlist"]
-    PSD --> CIR
+    PR --> CIR[.cir Netlist]
+    PS --> CIR
     GD --> CIR
     BM --> CIR
-    PMD --> CIR
-    CMD --> CIR
+    PM --> CIR
+    CM --> CIR
 
-    CIR --> SV["Syntax Validator\nB-source checks,\npin count verification"]
-    SV -->|PASS| NG["ngspice Gate\nCompile check"]
-    SV -->|FAIL| FIX["Auto-fix\nternary conversion,\npulse removal"]
+    CIR --> SV[Syntax Validator<br/>B-source checks,<br/>pin count verification]
+    SV -->|PASS| NG[ngspice Gate<br/>Compile check]
+    SV -->|FAIL| FIX[Auto-fix<br/>& → ternary,<br/>pulse() removal]
     FIX --> SV
 
-    CIR --> LT["LTSpice Generator\n.asc schematic"]
+    CIR --> LT[LTSpice Generator<br/>.asc schematic]
 ```
 
 ---

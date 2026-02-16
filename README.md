@@ -21,16 +21,6 @@ And generates:
 
 ---
 
-## Screenshots
-
-![Dashboard](docs/Screenshots/Dashboard.png)
-
-![System Architecture](docs/Screenshots/system_overview.png)
-
-![Bill of Materials](docs/Screenshots/BOM.png)
-
----
-
 ## Architecture
 
 CopperPilot uses a **multi-agent AI architecture** powered by Claude:
