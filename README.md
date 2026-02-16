@@ -4,8 +4,6 @@
 
 Describe a circuit in plain English. Get production-ready schematics, PCB layouts, and bill of materials.
 
-![CopperPilot Dashboard](docs/Screenshots/Dashboard.png)
-
 ---
 
 ## What It Does
@@ -23,11 +21,28 @@ And generates:
 
 ---
 
+## Screenshots
+
+![Dashboard](docs/Screenshots/Dashboard.png)
+
+![System Architecture](docs/Screenshots/system_overview.png)
+
+![Bill of Materials](docs/Screenshots/BOM.png)
+
+---
+
 ## Architecture
 
 CopperPilot uses a **multi-agent AI architecture** powered by Claude:
 
-![System Architecture](docs/Screenshots/system_overview.png)
+```
+DesignSupervisor (orchestrator)
+├── ModuleAgent (per-module coordinator)
+│   ├── ComponentAgent (component selection)
+│   ├── ConnectionAgent (connection synthesis)
+│   └── ValidationAgent (per-module ERC)
+└── IntegrationAgent (cross-module integration)
+```
 
 Each agent handles a focused task, allowing the system to design circuits with 200+ components without context overload.
 
@@ -151,8 +166,6 @@ curl -X POST http://localhost:8000/api/projects \
 ---
 
 ## Output Formats
-
-![Bill of Materials](docs/Screenshots/BOM.png)
 
 | Format | Files | Description |
 |--------|-------|-------------|
