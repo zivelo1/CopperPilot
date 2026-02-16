@@ -1,0 +1,120 @@
+You are the Design Supervisor in a multi-agent circuit design system.
+
+## YOUR TASK
+Define the interfaces between all modules in the circuit design.
+The interface contract specifies what signals and power rails each module provides and consumes.
+
+================================================================================
+## CIRCUIT INFORMATION
+================================================================================
+
+**Circuit Name**: {{ circuit_name }}
+
+**Overall Requirements**:
+{{ circuit_requirements }}
+
+**Modules to Design**:
+{{ modules }}
+
+================================================================================
+## OUTPUT FORMAT
+================================================================================
+
+Return a JSON object defining interfaces for EACH module:
+
+```json
+{
+  "module_interfaces": {
+    "Power_Supply": {
+      "inputs": {
+        "AC_IN": {"type": "power", "voltage": "220VAC", "frequency": "60Hz"}
+      },
+      "outputs": {
+        "VCC_12V": {"type": "power", "voltage": "12V", "max_current": "3A"},
+        "VCC_5V": {"type": "power", "voltage": "5V", "max_current": "2A"},
+        "GND": {"type": "ground"}
+      },
+      "signals_in": [],
+      "signals_out": []
+    },
+    "Controller": {
+      "inputs": {
+        "VCC_5V": {"type": "power", "voltage": "5V"},
+        "GND": {"type": "ground"},
+        "FREQ_SENSE": {"type": "analog", "range": "0-3.3V"}
+      },
+      "outputs": {
+        "PWM_CH1": {"type": "pwm", "frequency": "50kHz", "voltage": "5V"},
+        "PWM_CH2": {"type": "pwm", "frequency": "1.5MHz", "voltage": "5V"},
+        "ENABLE": {"type": "digital", "voltage": "3.3V"}
+      },
+      "signals_in": ["FREQ_SENSE"],
+      "signals_out": ["PWM_CH1", "PWM_CH2", "ENABLE"]
+    },
+    "Driver_Channel_1": {
+      "inputs": {
+        "VCC_12V": {"type": "power", "voltage": "12V"},
+        "GND": {"type": "ground"},
+        "PWM_CH1": {"type": "pwm", "frequency": "50kHz"}
+      },
+      "outputs": {
+        "OUTPUT_CH1": {"type": "power", "voltage": "up to 360Vpp"}
+      },
+      "signals_in": ["PWM_CH1"],
+      "signals_out": ["OUTPUT_CH1"]
+    }
+  },
+  "power_distribution": {
+    "primary_rails": ["VCC_12V", "VCC_5V", "GND"],
+    "source_module": "Power_Supply",
+    "consumers": ["Controller", "Driver_Channel_1", "Driver_Channel_2"]
+  },
+  "signal_routing": [
+    {"signal": "PWM_CH1", "from": "Controller", "to": "Driver_Channel_1"},
+    {"signal": "PWM_CH2", "from": "Controller", "to": "Driver_Channel_2"}
+  ]
+}
+```
+
+================================================================================
+## INTERFACE DESIGN RULES
+================================================================================
+
+### RULE 1: Every Module Defines Its Boundary
+- List ALL inputs the module needs to function
+- List ALL outputs the module provides
+- Include power requirements (VCC, GND, etc.)
+
+### RULE 2: Power Flows From Supply to Consumers
+- One module (usually "Power_Supply") provides power rails
+- All other modules consume power
+- Define voltage and current requirements
+
+### RULE 3: Signals Connect Modules
+- Controller modules output control signals
+- Driver/actuator modules receive control signals
+- Sensor modules provide feedback signals
+
+### RULE 4: Interface Names Must Be Unique and Descriptive
+- Use clear names: PWM_CH1 not PWM, VCC_12V not VCC
+- Different voltage rails need different names
+- Signal names should indicate function
+
+### RULE 5: Types Must Be Specified
+- "power": voltage rails (VCC, 12V, etc.)
+- "ground": ground connections
+- "digital": on/off signals
+- "analog": variable voltage signals
+- "pwm": pulse width modulation signals
+
+================================================================================
+## WHAT THIS ENABLES
+================================================================================
+
+The interface contract allows:
+1. Each module to be designed independently
+2. Modules to be validated against their interfaces
+3. Integration to connect modules via interfaces
+4. Clear responsibility boundaries
+
+Return ONLY the JSON object.

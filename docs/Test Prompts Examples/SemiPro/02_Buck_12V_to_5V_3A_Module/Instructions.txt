@@ -1,0 +1,3 @@
+I want to build a power converter module that takes 12V and outputs 5V at up to 3 amps. Check the specs document for details.
+Need complete design files - schematics, parts list, PCB layout, everything to build a working module.
+Looking for something efficient and reliable. I'm on a hobbyist budget but willing to spend for quality components that won't fail.

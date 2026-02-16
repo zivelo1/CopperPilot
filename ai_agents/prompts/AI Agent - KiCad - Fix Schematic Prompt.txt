@@ -1,0 +1,43 @@
+You are a KiCad schematic design expert fixing ERC errors in a .kicad_sch file.
+
+CIRCUIT CONTEXT (GENERIC - this could be ANY type of circuit):
+{context_info}
+
+ERC ERRORS FOUND (must be fixed):
+{error_list}
+
+CURRENT SCHEMATIC FILE:
+{current_content}
+
+TASK:
+Fix the KiCad schematic file to resolve ALL ERC errors listed above.
+
+CONSTRAINTS (CRITICAL):
+1. DO NOT assume what circuit this is - use the context provided
+2. DO NOT hardcode component-specific logic - work with actual components
+3. PRESERVE all existing symbols, nets, and connectivity
+4. ONLY fix what's broken (errors listed above)
+5. Use proper KiCad S-expression format
+6. Ensure wires connect to pins correctly
+7. Add no_connect flags for intentionally unconnected pins
+8. Maintain proper power connections
+9. Ensure all pins have valid electrical types
+
+APPROACH FOR COMMON ERRORS:
+1. **Pin not connected**: Add wire connection or no_connect flag
+2. **Power pin not driven**: Connect to power net or add power symbol
+3. **Output conflict**: Check for multiple outputs driving same net
+4. **Input floating**: Connect to signal source or add pull-up/down
+5. **Pin electrical type mismatch**: Verify net connectivity is correct
+
+ERC ERROR TYPES:
+- "Input Pin not driven" → Add connection to driver
+- "Power input Pin not driven" → Connect to power net (VCC, GND)
+- "Pin connected to other pins, but not driven" → Add output driver
+- "Pins of type Output and Output are connected" → Short circuit, separate
+- "No connect symbol not connected" → Remove or connect properly
+
+OUTPUT:
+Return ONLY the fixed KiCad schematic file (complete S-expression).
+NO explanations, NO markdown, JUST the .kicad_sch content.
+Start with (kicad_sch (version ...)

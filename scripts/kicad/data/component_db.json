@@ -1,0 +1,190 @@
+{
+  "resistor": {
+    "symbol": "Device:R",
+    "prefix": "R",
+    "pins": 2,
+    "footprints": {
+      "0402": "Resistor_SMD:R_0402_1005Metric",
+      "0603": "Resistor_SMD:R_0603_1608Metric",
+      "0805": "Resistor_SMD:R_0805_2012Metric",
+      "1206": "Resistor_SMD:R_1206_3216Metric",
+      "THT": "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal"
+    }
+  },
+  "capacitor": {
+    "symbol": "Device:C",
+    "prefix": "C",
+    "pins": 2,
+    "footprints": {
+      "0402": "Capacitor_SMD:C_0402_1005Metric",
+      "0603": "Capacitor_SMD:C_0603_1608Metric",
+      "0805": "Capacitor_SMD:C_0805_2012Metric",
+      "1206": "Capacitor_SMD:C_1206_3216Metric",
+      "THT": "Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P5.00mm"
+    }
+  },
+  "cap_polarized": {
+    "symbol": "Device:CP",
+    "prefix": "C",
+    "pins": 2,
+    "footprints": {
+      "SMD": "Capacitor_SMD:CP_Elec_6.3x5.4",
+      "THT": "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm"
+    }
+  },
+  "inductor": {
+    "symbol": "Device:L",
+    "prefix": "L",
+    "pins": 2,
+    "footprints": {
+      "0603": "Inductor_SMD:L_0603_1608Metric",
+      "0805": "Inductor_SMD:L_0805_2012Metric",
+      "1206": "Inductor_SMD:L_1206_3216Metric",
+      "THT": "Inductor_THT:L_Axial_L5.3mm_D2.2mm_P10.16mm_Horizontal"
+    }
+  },
+  "diode": {
+    "symbol": "Device:D",
+    "prefix": "D",
+    "pins": 2,
+    "footprints": {
+      "SOD123": "Diode_SMD:D_SOD-123",
+      "SMA": "Diode_SMD:D_SMA",
+      "DO41": "Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal"
+    }
+  },
+  "led": {
+    "symbol": "Device:LED",
+    "prefix": "D",
+    "pins": 2,
+    "footprints": {
+      "0603": "LED_SMD:LED_0603_1608Metric",
+      "0805": "LED_SMD:LED_0805_2012Metric",
+      "THT": "LED_THT:LED_D5.0mm"
+    }
+  },
+  "transistor": {
+    "symbol": "Device:Q_NPN_BCE",
+    "prefix": "Q",
+    "pins": 3,
+    "footprints": {
+      "SOT23": "Package_TO_SOT_SMD:SOT-23",
+      "TO92": "Package_TO_SOT_THT:TO-92_Inline",
+      "TO220": "Package_TO_SOT_THT:TO-220-3_Vertical"
+    }
+  },
+  "mosfet": {
+    "symbol": "Device:Q_NMOS_GDS",
+    "prefix": "Q",
+    "pins": 3,
+    "footprints": {
+      "SOT23": "Package_TO_SOT_SMD:SOT-23",
+      "TO220": "Package_TO_SOT_THT:TO-220-3_Vertical",
+      "TO252": "Package_TO_SOT_SMD:TO-252-2"
+    }
+  },
+  "opamp": {
+    "symbol": "Amplifier_Operational:LM358",
+    "prefix": "U",
+    "pins": 8,
+    "footprints": {
+      "SOIC8": "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+      "DIP8": "Package_DIP:DIP-8_W7.62mm"
+    }
+  },
+  "regulator": {
+    "symbol": "Regulator_Linear:LM7805_TO220",
+    "prefix": "U",
+    "pins": 3,
+    "footprints": {
+      "TO220": "Package_TO_SOT_THT:TO-220-3_Vertical",
+      "TO252": "Package_TO_SOT_SMD:TO-252-2"
+    }
+  },
+  "ic": {
+    "symbol": "MCU_Microchip_ATmega:ATmega328P-PU",
+    "prefix": "U",
+    "pins": 28,
+    "footprints": {
+      "DIP28": "Package_DIP:DIP-28_W7.62mm",
+      "SOIC28": "Package_SO:SOIC-28W_7.5x17.9mm_P1.27mm"
+    }
+  },
+  "microcontroller": {
+    "symbol": "MCU_ST_STM32F1:STM32F103C8Tx",
+    "prefix": "U",
+    "pins": 48,
+    "footprints": {
+      "QFP48": "Package_QFP:LQFP-48_7x7mm_P0.5mm"
+    }
+  },
+  "connector": {
+    "symbol": "Connector_Generic:Conn_01x04",
+    "prefix": "J",
+    "pins": 4,
+    "footprints": {
+      "JST": "Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical",
+      "Header": "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+    }
+  },
+  "crystal": {
+    "symbol": "Device:Crystal",
+    "prefix": "Y",
+    "pins": 2,
+    "footprints": {
+      "HC49": "Crystal:Crystal_HC49-4H_Vertical",
+      "SMD": "Crystal:Crystal_SMD_HC49-SD"
+    }
+  },
+  "fuse": {
+    "symbol": "Device:Fuse",
+    "prefix": "F",
+    "pins": 2,
+    "footprints": {
+      "1206": "Fuse:Fuse_1206_3216Metric",
+      "THT": "Fuse:Fuseholder_Cylinder-5x20mm_Schurter_0031_8201_Horizontal_Open"
+    }
+  },
+  "varistor": {
+    "symbol": "Device:Varistor",
+    "prefix": "RV",
+    "pins": 2,
+    "footprints": {
+      "THT": "Varistor:RV_Disc_D12mm_W4.8mm_P7.5mm"
+    }
+  },
+  "transformer": {
+    "symbol": "Device:Transformer_1P_1S",
+    "prefix": "T",
+    "pins": 4,
+    "footprints": {
+      "THT": "Transformer_THT:Transformer_Toroid_Horizontal_D14.0mm_Amidon-T50"
+    }
+  },
+  "bridge_rectifier": {
+    "symbol": "Diode_Bridge:MB6S",
+    "prefix": "D",
+    "pins": 4,
+    "footprints": {
+      "DIP4": "Package_DIP:DIP-4_W7.62mm"
+    }
+  },
+  "thermistor": {
+    "symbol": "Device:Thermistor_NTC",
+    "prefix": "TH",
+    "pins": 2,
+    "footprints": {
+      "0805": "Resistor_SMD:R_0805_2012Metric",
+      "THT": "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal"
+    }
+  },
+  "test_point": {
+    "symbol": "Connector:TestPoint",
+    "prefix": "TP",
+    "pins": 1,
+    "footprints": {
+      "SMD": "TestPoint:TestPoint_Pad_D1.0mm",
+      "THT": "TestPoint:TestPoint_THTPad_D1.5mm_Drill1.0mm"
+    }
+  }
+}

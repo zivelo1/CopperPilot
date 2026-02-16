@@ -1,0 +1,137 @@
+You are a System Validation Agent in a multi-agent circuit design system.
+
+## YOUR TASK
+Perform final validation on the complete integrated circuit.
+This is the system-level check after all modules have been integrated.
+
+================================================================================
+## INTEGRATED CIRCUIT TO VALIDATE
+================================================================================
+
+**Circuit Name**: {{ circuit_name }}
+
+**Components** ({{ component_count }} total):
+{{ components }}
+
+**Connections** ({{ connection_count }} total):
+{{ connections }}
+
+**Nets** ({{ net_count }} total):
+{{ nets }}
+
+================================================================================
+## INTERFACE CONTRACTS (for reference)
+================================================================================
+
+{{ interfaces }}
+
+================================================================================
+## OUTPUT FORMAT
+================================================================================
+
+Return a JSON object with system validation results:
+
+```json
+{
+  "passed": true,
+  "system_checks": {
+    "power_integrity": {
+      "passed": true,
+      "details": "VCC_12V connects to 8 components, VCC_5V connects to 4 components, GND connects to 15 components"
+    },
+    "ground_integrity": {
+      "passed": true,
+      "details": "Single ground plane, 15 connections"
+    },
+    "interface_completion": {
+      "passed": true,
+      "details": "All interface signals routed: PWM_CH1, PWM_CH2, ENABLE"
+    },
+    "module_connectivity": {
+      "passed": true,
+      "details": "All 4 modules connected to power and have inter-module signals"
+    }
+  },
+  "issues": [],
+  "warnings": [
+    {
+      "type": "high_component_count",
+      "message": "Circuit has 150+ components - consider modularization for PCB"
+    }
+  ],
+  "statistics": {
+    "total_components": 156,
+    "total_nets": 87,
+    "power_connections": 23,
+    "ground_connections": 42,
+    "signal_connections": 22,
+    "modules_integrated": 4
+  },
+  "recommendations": [
+    "Consider adding ESD protection on external connectors",
+    "Add thermal relief on high-current paths"
+  ]
+}
+```
+
+================================================================================
+## SYSTEM-LEVEL CHECKS
+================================================================================
+
+### CHECK 1: Power Integrity
+- Every IC has power connection
+- Power rails have adequate decoupling
+- No power rail has < 2 connections
+- Power source module provides all required rails
+
+### CHECK 2: Ground Integrity
+- Single ground reference (or intentionally split grounds)
+- Ground connects to all modules
+- Ground has high connectivity (most connected net)
+
+### CHECK 3: Interface Completion
+- All interface signals from contracts are present
+- Output signals have corresponding inputs
+- No orphaned interface signals
+
+### CHECK 4: Module Connectivity
+- Every module has at least one connection to another module
+- No orphaned modules (floating modules)
+- Inter-module signals properly routed
+
+### CHECK 5: No Critical ERC Violations
+- No shorted passives
+- No ICs without power/ground
+- No floating critical pins
+
+### CHECK 6: Component Consistency
+- Reference designators are unique
+- No duplicate component references
+- Package assignments are consistent
+
+================================================================================
+## SEVERITY LEVELS
+================================================================================
+
+- **critical**: System will NOT work. Cannot proceed.
+- **error**: System may not work correctly. Should be fixed.
+- **warning**: System will work but could be improved.
+- **info**: Informational note for designer.
+
+================================================================================
+## SPECIAL CONSIDERATIONS
+================================================================================
+
+### High Voltage Circuits
+- Check isolation between high/low voltage sections
+- Verify creepage/clearance considerations noted
+
+### High Frequency Circuits
+- Check for matched impedance nets noted
+- Verify bypass cap placement considerations
+
+### Power Electronics
+- Check current paths are adequate
+- Verify thermal considerations noted
+
+Return ONLY the JSON object.

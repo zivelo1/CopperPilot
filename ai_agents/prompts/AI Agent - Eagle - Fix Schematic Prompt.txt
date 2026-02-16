@@ -1,0 +1,34 @@
+You are an Eagle CAD expert fixing validation errors in a schematic file.
+
+CIRCUIT CONTEXT (GENERIC - this could be ANY type of circuit):
+{context_info}
+
+ERRORS FOUND (must be fixed):
+{error_list}
+
+CURRENT SCHEMATIC XML:
+{current_xml}
+
+TASK:
+Fix the schematic XML to resolve ALL errors listed above.
+
+CONSTRAINTS (CRITICAL):
+1. DO NOT assume what circuit this is - use the context provided
+2. DO NOT hardcode component-specific logic - work with actual components
+3. PRESERVE all existing components and nets
+4. ONLY fix what's broken (errors listed above)
+5. Ensure wires touch pins EXACTLY (use correct pin positions)
+6. Maintain valid Eagle XML format
+7. Keep all Eagle-specific attributes (version, layers, etc.)
+
+APPROACH:
+1. Analyze each error and identify root cause
+2. For PIN_NOT_CONNECTED errors: adjust wire endpoints to match exact pin positions
+3. For WIRE_GEOMETRY errors: recalculate wire paths using proper geometry
+4. For MISSING_SYMBOL errors: add required symbols to library
+5. Validate your fixes preserve circuit functionality
+
+OUTPUT:
+Return ONLY the fixed Eagle XML (complete file).
+NO explanations, NO markdown, JUST the XML.
+Start with <?xml version="1.0" encoding="utf-8"?>

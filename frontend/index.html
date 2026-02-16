@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CopperPilot — AI PCB Co‑Pilot</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <style>
+        :root {
+            /* CopperPilot brand tokens */
+            --primary: #B87333;       /* Copper */
+            --primary-dark: #8C4A1E;  /* Dark copper */
+            --secondary: #2BB3A3;     /* Teal accent */
+            --accent: #2BB3A3;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg-gradient: linear-gradient(135deg, #1B1D21 0%, #2A2D33 100%); /* Charcoal */
+            --card-bg: rgba(255, 255, 255, 0.98);
+            --text-primary: #1B1D21;   /* Charcoal */
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Modern Header */
+        .header {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            padding: 1.25rem 2rem;
+            box-shadow: var(--shadow-md);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-md);
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+        .logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .header h1 {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .connection-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        .connection-indicator.disconnected {
+            background: var(--error);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        /* Main Container */
+        .container {
+            flex: 1;
+            display: flex;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Modern Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            overflow: hidden;
+        }
+
+        /* Chat Panel */
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .chat-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .chat-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            background: #fafafa;
+            max-height: calc(100vh - 400px);
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .message.system {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .message .bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 18px;
+            font-size: 0.9375rem;
+            line-height: 1.5;
+            box-shadow: var(--shadow-sm);
+            white-space: pre-wrap; /* Preserve newlines and spaces for professional formatting */
+        }
+
+        .message.user .bubble {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.system .bubble {
+            background: white;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message .time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+            padding: 0 0.5rem;
+        }
+
+        /* Modern Input */
+        .chat-input {
+            padding: 1.5rem;
+            background: white;
+            border-top: 1px solid var(--border);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;  /* Changed from center to flex-end to align button with bottom of textarea */
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .input-wrapper textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.9375rem;
+            transition: all 0.2s;
+            background: #f9fafb;
+            resize: vertical;
+            min-height: 80px;
+            max-height: 300px;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+
+        .input-wrapper textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .send-button {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .send-button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* File Upload Area */
+        .file-upload-area {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .file-button {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .file-button:hover {
+            background: white;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .file-button input {
+            display: none;
+        }
+
+        /* Progress Panel */
+        .progress-panel {
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        .progress-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .progress-bar-container {
+            background: #f3f4f6;
+            border-radius: 12px;
+            height: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Progress Steps */
+        .progress-steps {
+            list-style: none;
+        }
+
+        .progress-step {
+            padding: 0.875rem;
+            margin-bottom: 0.75rem;
+            border-radius: 10px;
+            border-left: 3px solid var(--border);
+            background: white;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .progress-step.completed {
+            border-left-color: var(--success);
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.05), transparent);
+        }
+
+        .progress-step.active {
+            border-left-color: var(--primary);
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.1), transparent);
+            box-shadow: var(--shadow-md);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--border);
+            font-size: 1rem;
+        }
+
+        .progress-step.completed .step-icon {
+            background: var(--success);
+            color: white;
+        }
+
+        .progress-step.active .step-icon {
+            background: var(--primary);
+            color: white;
+            animation: rotate 2s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .step-info {
+            flex: 1;
+        }
+
+        .step-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+        }
+
+        .step-status {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* ETA Card */
+        .eta-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .eta-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .eta-time {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .progress-panel {
+                width: 100%;
+                order: -1;
+            }
+
+            .chat-messages {
+                max-height: 400px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .status-bar {
+                width: 100%;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .progress-panel {
+                padding: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+                gap: 1rem;
+            }
+        }
+
+        /* Logs Panel */
+        .logs-panel {
+            background: #1f2937;
+            border-radius: 10px;
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+        }
+
+        .log-entry {
+            font-size: 0.75rem;
+            line-height: 1.4;
+            margin-bottom: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: #e5e7eb;
+        }
+
+        .log-entry.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+        }
+
+        .log-entry.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #86efac;
+        }
+
+        .log-entry.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fcd34d;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo"><img src="/static/Logo.png" alt="CopperPilot logo"></div>
+                <div>
+                    <h1 style="letter-spacing:-0.02em;">CopperPilot</h1>
+                    <div class="subtitle">Your AI co‑pilot for schematics, PCB and BOM</div>
+                </div>
+            </div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="connection-indicator" id="connectionStatus"></span>
+                    <span id="statusText">Ready</span>
+                </div>
+                <div class="status-item">
+                    <span>📋</span>
+                    <span>Project: <strong id="projectId">None</strong></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="chat-panel card">
+            <div class="chat-header">
+                <h2>🚀 CopperPilot Chat</h2>
+                <p>Describe any circuit — from LED blinkers to RF transceivers</p>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">
+                    <div class="message-content">
+                        <div class="bubble">
+                            👋 Welcome to CopperPilot!
+
+                            I can generate complete electronic circuits from your description:
+                            • Simple circuits (LED, sensors)
+                            • Medium complexity (amplifiers, controllers)
+                            • Complex systems (multi-channel, RF designs)
+
+                            Just describe what you need, and I'll generate schematics, PCB layouts, and BOMs in multiple formats (KiCad, Eagle, EasyEDA).
+                        </div>
+                        <div class="time">Ready</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input">
+                <form id="chatForm">
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <textarea id="messageInput"
+                                      placeholder="Describe your circuit (e.g., 'dual-channel ultrasonic amplifier' or 'simple LED blinker')"
+                                      autocomplete="off"
+                                      rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="send-button" id="sendButton">
+                            <span>Generate</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+                    <div class="file-upload-area">
+                        <label class="file-button">
+                            <span>📄 Upload PDF Specs</span>
+                            <input type="file" id="pdfFile" accept=".pdf">
+                        </label>
+                        <label class="file-button">
+                            <span>🖼️ Upload Schematic</span>
+                            <input type="file" id="imageFile" accept=".png,.jpg,.jpeg">
+                        </label>
+                        <span id="fileStatus" style="color: var(--text-secondary); font-size: 0.875rem;"></span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="progress-panel card">
+            <div class="progress-header">
+                <span>⚙️</span>
+                <span>Generation Pipeline</span>
+            </div>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+            </div>
+
+            <ul class="progress-steps" id="progressSteps">
+                <li class="progress-step pending">
+                    <div class="step-header">
+                        <div class="step-icon">📝</div>
+                        <div class="step-info">
+                            <div class="step-name">Information Gathering</div>
+                            <div class="step-status">Waiting...</div>
+                        </div>
+                    </div>
+                </li>
+                <li class="progress-step pending">
+                    <div class="step-header">
+                        <div class="step-icon">🎨</div>
+                        <div class="step-info">
+                            <div class="step-name">High-Level Architecture</div>
+                            <div class="step-status">Pending</div>
+                        </div>
+                    </div>
+                </li>
+                <li class="progress-step pending">
+                    <div class="step-header">
+                        <div class="step-icon">⚡</div>
+                        <div class="step-info">
+                            <div class="step-name">Circuit Generation</div>
+                            <div class="step-status">Pending</div>
+                        </div>
+                    </div>
+                </li>
+                <li class="progress-step pending">
+                    <div class="step-header">
+                        <div class="step-icon">🔄</div>
+                        <div class="step-info">
+                            <div class="step-name">Format Conversion</div>
+                            <div class="step-status">Pending</div>
+                        </div>
+                    </div>
+                </li>
+                <li class="progress-step pending">
+                    <div class="step-header">
+                        <div class="step-icon">📦</div>
+                        <div class="step-info">
+                            <div class="step-name">BOM & Parts Selection</div>
+                            <div class="step-status">Pending</div>
+                        </div>
+                    </div>
+                </li>
+                <li class="progress-step pending">
+                    <div class="step-header">
+                        <div class="step-icon">✅</div>
+                        <div class="step-info">
+                            <div class="step-name">Quality Assurance</div>
+                            <div class="step-status">Pending</div>
+                        </div>
+                    </div>
+                </li>
+                <li class="progress-step pending">
+                    <div class="step-header">
+                        <div class="step-icon">📁</div>
+                        <div class="step-info">
+                            <div class="step-name">Final Packaging</div>
+                            <div class="step-status">Pending</div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="eta-card">
+                <div class="eta-label">Estimated Time Remaining</div>
+                <div class="eta-time" id="etaTime">--:--</div>
+            </div>
+
+            <div class="logs-panel">
+                <div id="logsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Copy the same JavaScript from the original file
+        // with the updated selectors for the new structure
+
+        // WebSocket connection
+        let ws = null;
+        let currentProjectId = null;
+
+        // DOM elements
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatForm = document.getElementById('chatForm');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const statusText = document.getElementById('statusText');
+        const projectIdSpan = document.getElementById('projectId');
+        const progressBar = document.getElementById('progressBar');
+        const progressSteps = document.querySelectorAll('.progress-step');
+        const etaTime = document.getElementById('etaTime');
+        const logsContainer = document.getElementById('logsContainer');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set up form submission
+            chatForm.addEventListener('submit', handleSubmit);
+
+            // File upload handlers
+            document.getElementById('pdfFile').addEventListener('change', handleFileUpload);
+            document.getElementById('imageFile').addEventListener('change', handleFileUpload);
+        });
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage(message, 'user');
+
+            // Clear input
+            messageInput.value = '';
+            sendButton.disabled = true;
+
+            // Check if we're in clarification mode
+            if (window.clarificationMode) {
+                await handleClarificationResponse(message);
+                return;
+            }
+
+            try {
+                // Prepare form data to handle file uploads
+                const formData = new FormData();
+                formData.append('requirements', message);
+
+                // Add PDF file if selected
+                const pdfInput = document.getElementById('pdfFile');
+                if (pdfInput && pdfInput.files.length > 0) {
+                    formData.append('pdf_file', pdfInput.files[0]);
+                }
+
+                // Add image file if selected
+                const imageInput = document.getElementById('imageFile');
+                if (imageInput && imageInput.files.length > 0) {
+                    formData.append('image_file', imageInput.files[0]);
+                }
+
+                // Send to server
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.project_id) {
+                    currentProjectId = data.project_id;
+                    projectIdSpan.textContent = currentProjectId.slice(0, 8) + '...';
+
+                    // Connect WebSocket
+                    connectWebSocket(currentProjectId);
+
+                    // Add system message
+                    addMessage('🚀 Circuit generation started! Processing through our 6-step workflow with AI models optimized for each stage.', 'system');
+
+                    // Start polling for status
+                    setTimeout(() => checkForClarification(currentProjectId), 2000);
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('❌ Failed to start generation. Please try again.', 'system');
+            } finally {
+                sendButton.disabled = false;
+            }
+        }
+
+        function connectWebSocket(projectId) {
+            // Close existing connection
+            if (ws) {
+                ws.close();
+            }
+
+            // Create new WebSocket connection
+            const wsUrl = `ws://localhost:8000/ws/${projectId}`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                connectionStatus.className = 'connection-indicator';
+                statusText.textContent = 'Connected';
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                connectionStatus.className = 'connection-indicator disconnected';
+                statusText.textContent = 'Connection error';
+            };
+
+            ws.onclose = () => {
+                connectionStatus.className = 'connection-indicator disconnected';
+                statusText.textContent = 'Disconnected';
+            };
+        }
+
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'progress':
+                    updateProgress(data.progress, data.step, data.eta);
+                    break;
+                case 'step_progress':
+                    updateProgress(data.progress_percent || data.progress, data.step, data.eta, data);
+                    // TC #80 FIX: Show step progress messages without requiring completed_files
+                    if (data.message) {
+                        const stepName = data.step_name ? ` (${data.step_name})` : '';
+                        addMessage(`Step ${data.step}${stepName}: ${data.message}`, 'system');
+                    }
+                    break;
+                case 'log':
+                    addLogEntry(data.message, data.level);
+                    break;
+                case 'status':
+                    updateStatus(data.status, data.message);
+                    break;
+                case 'complete':
+                    handleCompletion(data);
+                    break;
+                case 'error':
+                    handleError(data.error);
+                    break;
+            }
+        }
+
+        function updateProgress(percent, step, eta, details = null) {
+            progressBar.style.width = `${percent}%`;
+
+            if (eta) {
+                etaTime.textContent = eta;
+            }
+
+            if (step && step > 0 && step <= progressSteps.length) {
+                progressSteps.forEach((stepEl, index) => {
+                    const statusEl = stepEl.querySelector('.step-status');
+                    const iconEl = stepEl.querySelector('.step-icon');
+
+                    if (index < step - 1) {
+                        stepEl.className = 'progress-step completed';
+                        statusEl.textContent = 'Completed';
+                        iconEl.textContent = '✅';
+                    } else if (index === step - 1) {
+                        stepEl.className = 'progress-step active';
+                        if (details && details.message) {
+                            statusEl.textContent = details.message;
+                        } else {
+                            statusEl.textContent = 'Processing...';
+                        }
+                    } else {
+                        stepEl.className = 'progress-step pending';
+                        statusEl.textContent = 'Pending';
+                    }
+                });
+            }
+        }
+
+        function addMessage(text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = text;
+
+            const time = document.createElement('div');
+            time.className = 'time';
+            time.textContent = new Date().toLocaleTimeString();
+
+            contentDiv.appendChild(bubble);
+            contentDiv.appendChild(time);
+            messageDiv.appendChild(contentDiv);
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addLogEntry(message, level = 'info') {
+            const logDiv = document.createElement('div');
+            logDiv.className = `log-entry ${level}`;
+            logDiv.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+
+            logsContainer.appendChild(logDiv);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+
+            // Keep only last 20 logs
+            while (logsContainer.children.length > 20) {
+                logsContainer.removeChild(logsContainer.firstChild);
+            }
+        }
+
+        function updateStatus(status, message) {
+            statusText.textContent = status;
+            if (message) {
+                addMessage(message, 'system');
+            }
+        }
+
+        function handleCompletion(data) {
+            updateProgress(100, 7, '00:00');
+            progressSteps[6].className = 'progress-step completed';
+            progressSteps[6].querySelector('.step-icon').textContent = '✅';
+            progressSteps[6].querySelector('.step-status').textContent = 'Completed';
+
+            addMessage('✅ Circuit generation complete! Your files are ready for download in multiple formats (KiCad, Eagle, EasyEDA).', 'system');
+
+            if (data.downloads) {
+                const links = data.downloads.map(d => `<a href="${d.url}" style="color: var(--primary)">${d.name}</a>`).join(' | ');
+                addMessage(`Downloads: ${links}`, 'system');
+            }
+        }
+
+        function handleError(error) {
+            addMessage(`❌ Error: ${error}`, 'system');
+            addLogEntry(error, 'error');
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('fileStatus').textContent = `📎 ${file.name}`;
+            }
+        }
+
+        async function checkForClarification(projectId) {
+            try {
+                const response = await fetch(`/api/status/${projectId}`);
+                const data = await response.json();
+
+                if (data.needs_clarification) {
+                    handleClarification({
+                        questions: data.questions || data.reply,
+                        project_id: projectId
+                    });
+                } else if (data.status !== 'Complete' && data.status !== 'Error') {
+                    setTimeout(() => checkForClarification(projectId), 3000);
+                }
+            } catch (error) {
+                console.error('Error checking for clarification:', error);
+            }
+        }
+
+        function handleClarification(data) {
+            const questions = data.questions || data.reply || 'Additional information needed.';
+
+            addMessage('❓ I need some clarification to continue:', 'system');
+            addMessage(questions, 'system');
+
+            messageInput.placeholder = 'Please answer the questions above...';
+            sendButton.disabled = false;
+
+            window.clarificationMode = true;
+            window.currentProjectId = data.project_id;
+        }
+
+        async function handleClarificationResponse(message) {
+            try {
+                const formData = new FormData();
+                formData.append('requirements', message);
+                formData.append('clarification_response', 'true');
+                formData.append('project_id', window.currentProjectId);
+
+                const response = await fetch('/api/continue', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    addMessage('✅ Thanks! Continuing with circuit generation...', 'system');
+                    window.clarificationMode = false;
+                    setTimeout(() => checkForClarification(window.currentProjectId), 2000);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('❌ Failed to send response. Please try again.', 'system');
+            }
+        }
+    </script>
+</body>
+</html>

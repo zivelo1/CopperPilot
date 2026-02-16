@@ -1,0 +1,275 @@
+## Module to Design: {{ $json.module }}
+## Module {{ $json.moduleIndex + 1 }} of {{ $json.totalModules }}
+
+# STAGE 1: COMPONENT SELECTION
+
+## YOUR ROLE
+You are an expert electronic circuit designer. Your task in THIS STAGE is to SELECT COMPONENTS ONLY.
+You will NOT create connections or netlists - that happens in Stage 2.
+
+## YOUR MISSION
+Based on the module requirements, select ALL components needed with:
+- Correct values (resistance, capacitance, etc.)
+- Correct voltage/current/power ratings
+- Correct packages
+- Proper reference designators
+
+---
+
+## CRITICAL: COMPONENT RATING SELECTION (UNIVERSAL FOR ALL CIRCUITS)
+
+**COMPONENT RATINGS MUST MATCH APPLICATION REQUIREMENTS**
+
+This applies to ALL circuit types - from simple LED blinkers to high-power amplifiers, from low-frequency audio to RF circuits.
+
+### UNIVERSAL RATING RULES:
+
+**1. MOSFET/Transistor Voltage Rating:**
+- Vds rating MUST be at least 1.5x the peak voltage (2x for high voltage applications)
+- For <= 24V systems: Use 40-60V rated parts
+- For 25-50V systems: Use 80-100V rated parts
+- For 51-100V systems: Use 150-200V rated parts
+- For 101-200V systems: Use 300-400V rated parts
+- For 201-400V systems: Use 500-600V rated parts
+- For > 400V systems: Use 600V+ or IGBTs
+
+**2. Capacitor Voltage Rating:**
+- Rating MUST be at least 1.5x working voltage (2x for electrolytics)
+- ALWAYS specify voltage rating: "100uF/100V" not just "100uF"
+
+**3. Resistor Power Rating:**
+- Calculate P = I²R or P = V²/R for expected current/voltage
+- Use rating at least 2x calculated power
+- 0603: 0.1W, 0805: 0.125W, 1206: 0.25W, 2512: 1W
+
+**4. Inductor Current Rating:**
+- Saturation current must exceed peak current by 20%+
+- DC resistance affects efficiency
+
+**5. Diode Ratings:**
+- Reverse voltage: 1.5x peak reverse voltage minimum
+- Forward current: 2x average current minimum
+- For rectifiers: Use appropriate recovery speed
+
+{{ component_rating_guidance }}
+
+### MANDATORY VOLTAGE DERATING (VIOLATION = CIRCUIT FAILURE):
+These are HARD CONSTRAINTS, not guidelines. Violating them will destroy components.
+
+- **Power MOSFETs**: Vds >= 2x the rail voltage they switch. A 400V rail requires >=800V MOSFETs.
+  Do NOT select MOSFETs below this threshold regardless of familiarity with the part.
+- **Diodes**: Vrrm >= 2x peak reverse voltage.
+- **Capacitors on power rails**: Voltage rating >= 1.5x rail voltage (2x for electrolytics).
+
+### MICROCONTROLLER PIN LIST RULE:
+When selecting a microcontroller or FPGA, you MUST define ALL pins including:
+- Every VCC/VDD and GND/VSS pin (there may be multiple)
+- Every GPIO, peripheral, and communication pin used in the design
+- Mark genuinely unused pins as NC (no-connect)
+The Connection Agent CANNOT use any pin you do not define here.
+
+### CLOCK SOURCE RULE:
+Every DDS (Direct Digital Synthesis), PLL (Phase-Locked Loop), or frequency synthesizer
+component REQUIRES an explicit clock/reference source component in the same module.
+Acceptable clock sources: crystal oscillator, TCXO, MEMS oscillator, clock generator IC.
+Do NOT assume an internal clock unless the datasheet explicitly guarantees one.
+
+### AUXILIARY PIN RULE: NO NAKED IC PINS (Critical Circuit Completeness)
+Every IC pin that is NOT power, ground, or a cross-module interface signal REQUIRES
+at least one external passive component. ICs cannot function with floating auxiliary pins.
+YOU MUST select the required passive components for ALL auxiliary pins during Stage 1.
+
+**Common auxiliary pin categories and their required passives:**
+
+1. **Filter/Compensation pins (FILT, FLT, COMP, MFLT):**
+   Add a capacitor (typical: 100nF-10uF, consult datasheet)
+
+2. **Offset/Calibration pins (OFS, OFSA, OFSB, TRIM):**
+   Add a capacitor or resistor network (consult datasheet)
+
+3. **Bias/Reference pins (BIAS, REF, SET, ISET):**
+   Add a resistor to set operating point (consult datasheet)
+
+4. **Soft-start/Timing pins (SS, RT, CT):**
+   Add a capacitor (soft-start) or resistor (timing)
+
+5. **Bootstrap pins (BOOT, BST):**
+   Add a bootstrap capacitor (between BOOT and switching node)
+
+6. **Average/RMS Output pins (AVG, RMS, OAVG, SUMR, SUMI):**
+   Add a filter capacitor to GND for time-constant setting
+
+7. **Buffer/Input pins (IBUF, OBUF, IHP, OHP):**
+   Add a bypass capacitor to GND OR connect to signal path with filter
+
+**RULE: For every IC in your design, review ALL its pins. If any auxiliary pin
+requires an external passive per the datasheet, that passive MUST appear in
+your component list. Failure to include auxiliary passives will cause single-ended
+net violations in the connection stage.**
+
+---
+
+## COMPONENT CATEGORIES TO CONSIDER
+
+Based on the module function, select from these categories as needed:
+
+### Power Components
+- Voltage regulators (linear, switching)
+- MOSFETs, IGBTs, transistors
+- Diodes (rectifier, Schottky, Zener, TVS)
+- Transformers, inductors
+- Fuses, circuit breakers, PTC resettable
+
+### Passive Components
+- Resistors (fixed, variable, precision, power)
+- Capacitors (ceramic, electrolytic, film, tantalum)
+- Inductors, ferrite beads
+- Crystals, resonators
+
+### Active Components
+- Operational amplifiers
+- Comparators
+- Voltage references
+- ADCs, DACs
+- Microcontrollers
+- Gate drivers
+- Current sense amplifiers
+
+### Interface Components
+- Connectors
+- LEDs, displays
+- Switches, relays
+- Optocouplers, isolators
+
+### Protection Components
+- TVS diodes, varistors (MOV)
+- ESD protection
+- Thermal fuses
+- Current limiters
+
+---
+
+## OUTPUT FORMAT
+
+You MUST output a valid JSON object with this structure.
+**CRITICAL: Every component MUST include a "pins" array!**
+
+```json
+{
+  "moduleName": "{{ $json.module }}",
+  "components": [
+    {
+      "ref": "U1",
+      "type": "voltage_regulator",
+      "value": "LM7805",
+      "specs": {
+        "inputVoltage": "7-35V",
+        "outputVoltage": "5V",
+        "outputCurrent": "1.5A"
+      },
+      "package": "TO-220",
+      "purpose": "5V rail regulation from 12V input",
+      "pins": [
+        {"number": "1", "name": "VIN", "type": "power_in"},
+        {"number": "2", "name": "GND", "type": "ground"},
+        {"number": "3", "name": "VOUT", "type": "power_out"}
+      ]
+    },
+    {
+      "ref": "C1",
+      "type": "capacitor",
+      "value": "100uF/25V",
+      "specs": {
+        "capacitance": "100uF",
+        "voltage": "25V",
+        "type": "electrolytic"
+      },
+      "package": "RADIAL-6.3x11",
+      "purpose": "Input filter capacitor for U1",
+      "pins": [
+        {"number": "1", "name": "1", "type": "passive"},
+        {"number": "2", "name": "2", "type": "passive"}
+      ]
+    },
+    {
+      "ref": "R1",
+      "type": "resistor",
+      "value": "10k",
+      "specs": {
+        "resistance": "10k",
+        "power": "0.125W",
+        "tolerance": "1%"
+      },
+      "package": "0805",
+      "purpose": "Pull-up resistor for enable signal",
+      "pins": [
+        {"number": "1", "name": "1", "type": "passive"},
+        {"number": "2", "name": "2", "type": "passive"}
+      ]
+    }
+  ],
+  "designNotes": [
+    "All capacitors rated for 2x working voltage",
+    "MOSFETs selected with 1.5x voltage margin"
+  ]
+}
+```
+
+### Standard Pin Counts by Component Type:
+- **Resistors, Capacitors, Inductors, Diodes, LEDs**: 2 pins
+- **Transistors (BJT), MOSFETs, Voltage Regulators (3-pin)**: 3 pins
+- **Op-Amps (single), Voltage Regulators (5-pin)**: 5-8 pins
+- **Bridge Rectifiers**: 4 pins
+- **Transformers**: 4-10 pins (primary + secondary windings)
+- **Relays**: 4-8 pins (coil + contacts)
+- **Connectors**: Number of positions
+
+---
+
+## MANDATORY INTERFACE CONTRACT (Fix K.9)
+
+This module has a contract with other modules in the system. The components you select
+MUST collectively provide ALL of the following interface signals. If the main IC does not
+have a required signal pin, you MUST add an auxiliary component to provide it.
+
+{{ interface_contract }}
+
+**ENFORCEMENT:**
+- Every output signal listed above MUST appear as a pin on at least one selected component.
+- Every input signal listed above MUST appear as a pin on at least one selected component.
+- Power rails (power_in, power_out) MUST be supported by the selected voltage regulator or power IC.
+- If a signal cannot be provided by the main IC, add a dedicated component:
+  - POWER_GOOD → Add a voltage supervisor IC (e.g., TPS3700, MAX6355)
+  - FAULT → Add a current monitor or comparator with open-drain output
+  - THERMAL_SENSE → Add a temperature sensor (e.g., TMP36, NTC thermistor)
+  - ENABLE/SHUTDOWN → Ensure the selected IC has an EN pin, or add a load switch
+
+---
+
+## VALIDATION BEFORE OUTPUT
+
+Before outputting, verify:
+1. Every component has a valid ref (U1, R1, C1, Q1, D1, L1, etc.)
+2. **Every component has a "pins" array with correct pin count**
+3. Every component has voltage/current/power ratings appropriate for the application
+4. Values include units and ratings where applicable
+5. Package is specified for each component
+6. Purpose explains why this component is needed
+7. **ALL interface signals from the MANDATORY INTERFACE CONTRACT above are covered by at least one component's pins**
+
+---
+
+## MODULE REQUIREMENTS
+
+{{ $json.moduleContext }}
+
+---
+
+## GENERATE COMPONENT LIST NOW
+
+CRITICAL OUTPUT FORMAT REQUIREMENT:
+Your response MUST be a single JSON object and NOTHING ELSE.
+- Do NOT include any reasoning, explanations, or commentary.
+- Do NOT wrap the JSON in markdown code blocks.
+- Start your response with { and end with }.
+- Any non-JSON text will cause a parse failure and waste the entire API call.

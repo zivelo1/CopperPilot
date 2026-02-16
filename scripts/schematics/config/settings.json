@@ -1,0 +1,50 @@
+{
+  "canvas": {
+    "width": 3600,
+    "height": 2400,
+    "dpi": 300,
+    "grid_size": 10,
+    "grid_major": 100,
+    "grid_minor": 25
+  },
+  "layout": {
+    "component_spacing_x": 350,
+    "component_spacing_y": 280,
+    "margin": 100,
+    "group_by_function": true,
+    "hierarchical": true
+  },
+  "routing": {
+    "wire_width": 2,
+    "power_wire_width": 3,
+    "wire_spacing": 10,
+    "orthogonal_only": true,
+    "minimize_crossings": true,
+    "use_buses": true
+  },
+  "rendering": {
+    "background_color": "white",
+    "grid_color": "#f0f0f0",
+    "text_color": "black",
+    "high_quality": true,
+    "antialiasing": true,
+    "show_grid": true,
+    "show_title_block": true,
+    "show_pin_numbers": true,
+    "show_net_labels": true,
+    "show_junction_dots": true
+  },
+  "symbols": {
+    "style": "IEEE",
+    "size_multiplier": 1.0,
+    "show_values": true,
+    "show_reference_designators": true
+  },
+  "validation": {
+    "perform_erc": true,
+    "perform_drc": true,
+    "check_connectivity": true,
+    "check_overlaps": true,
+    "min_spacing": 20
+  }
+}

@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "copperpilot"
+version = "1.0.0"
+description = "AI-powered circuit design automation platform"
+readme = "docs/README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+keywords = ["circuit-design", "eda", "kicad", "eagle", "ai", "automation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+]
+
+[project.urls]
+Homepage = "https://github.com/zivelo1/CopperPilot"
+Documentation = "https://github.com/zivelo1/CopperPilot/tree/main/docs"
+Issues = "https://github.com/zivelo1/CopperPilot/issues"
+
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+
+[tool.flake8]
+max-line-length = 120
+exclude = ["venv", "Backup", ".eggs", "build", "dist"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

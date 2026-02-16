@@ -1,0 +1,45 @@
+{
+  "version": "8.0",
+  "format_version": 20230121,
+  "grid": {
+    "schematic": 1.27,
+    "pcb": 0.1,
+    "unit": "mm"
+  },
+  "tracks": {
+    "default_width": 0.25,
+    "power_width": 0.4,
+    "min_width": 0.15
+  },
+  "vias": {
+    "default_size": 0.8,
+    "default_drill": 0.4,
+    "min_size": 0.5
+  },
+  "clearances": {
+    "default": 0.2,
+    "power": 0.3
+  },
+  "spacing": {
+    "schematic_x": 12.7,
+    "schematic_y": 10.16,
+    "pcb_x": 10.0,
+    "pcb_y": 8.0
+  },
+  "text": {
+    "default_size": 1.0,
+    "reference_size": 1.27,
+    "value_size": 1.0
+  },
+  "layers": {
+    "copper": ["F.Cu", "B.Cu"],
+    "technical": ["F.SilkS", "B.SilkS", "F.Mask", "B.Mask", "F.Paste", "B.Paste"],
+    "user": ["Dwgs.User", "Cmts.User", "Edge.Cuts", "F.CrtYd", "B.CrtYd"]
+  },
+  "paper_size": "A3",
+  "routing": {
+    "algorithm": "manhattan",
+    "max_iterations": 1000,
+    "junction_size": 0.5
+  }
+}

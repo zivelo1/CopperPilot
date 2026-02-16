@@ -1,0 +1,237 @@
+# FIX CIRCUIT ISSUES - 100% WORKING VERSION - ZERO TOLERANCE
+
+## YOUR MISSION: ABSOLUTE CIRCUIT PERFECTION
+You MUST output a 100% valid circuit with:
+- ZERO unconnected electrical components
+- ZERO net conflicts (no pin connected to multiple nets)
+- ZERO floating pins
+- COMPLETE and VALID circuit ready for PCB manufacturing
+
+## INPUT STRUCTURE
+You receive:
+```json
+{
+  "output": {
+    "moduleName": "...",
+    "moduleType": "...",
+    "components": [...],
+    "connections": [...],
+    "pinNetMapping": {...},
+    "nets": [...],
+    "interfacePoints": {...},
+    "validationStatus": {...},
+    "notes": [...]
+  },
+  "validationDetails": {
+    "allElectricalConnected": true/false,
+    "netConflicts": number,
+    "conflicts": [...]
+  }
+}
+```
+
+## MANDATORY PROCESS - FOLLOW EXACTLY
+
+### STEP 1: ASSESS THE SITUATION
+Check validationDetails:
+- If allElectricalConnected = true AND netConflicts = 0 → Go to STEP 2A (pass-through)
+- If ANY issues exist → Go to STEP 2B (fix everything)
+
+### STEP 2A: PERFECT CIRCUIT (No Changes Needed)
+Simply copy the ENTIRE "output" field exactly as is.
+
+### STEP 2B: FIXING REQUIRED - FOLLOW THIS ALGORITHM
+
+#### Phase 1: Build Clean Data Structures
+```python
+# 1. Create component registry
+components_dict = {comp.refDes: comp for comp in output.components}
+
+# 2. Create clean pin mapping (NO CONFLICTS ALLOWED)
+clean_pin_mapping = {}
+
+# 3. Create clean connections list
+clean_connections = []
+
+# 4. Track which components are connected
+connected_components = set()
+```
+
+#### Phase 2: Process Connections (CONFLICT RESOLUTION)
+For EACH connection in output.connections:
+```python
+1. Get from_pin and to_pin and net_name
+2. For from_pin:
+   - If from_pin NOT in clean_pin_mapping:
+     → Add it: clean_pin_mapping[from_pin] = net_name
+   - Else if clean_pin_mapping[from_pin] != net_name:
+     → CONFLICT! Use existing net: net_name = clean_pin_mapping[from_pin]
+3. For to_pin:
+   - If to_pin NOT in clean_pin_mapping:
+     → Add it: clean_pin_mapping[to_pin] = net_name
+   - Else if clean_pin_mapping[to_pin] != net_name:
+     → CONFLICT! Use existing net: net_name = clean_pin_mapping[to_pin]
+4. Add cleaned connection with consistent net
+5. Track connected components
+```
+
+#### Phase 3: Handle Unconnected Components
+For EACH component in output.components:
+```python
+If component.refDes NOT in connected_components:
+   If component is non-electrical (heatsink, mounting_hole):
+      → Remove from components list
+   Else if component is bypass capacitor (100nF, 0.1uF):
+      → Find nearest IC
+      → Connect cap.1 to IC.VCC, cap.2 to IC.GND
+      → Add to connections and pin_mapping
+   Else if component is pull-up/pull-down resistor:
+      → Connect to appropriate rail
+   Else:
+      → Remove component (truly unused)
+```
+
+#### Phase 4: Build Final Clean Output
+```python
+1. Rebuild nets array from clean_pin_mapping
+2. Recount all statistics
+3. Ensure validationStatus shows:
+   - allPinsConnected: true
+   - noNetConflicts: true
+   - pinNetMappingComplete: true
+```
+
+## NET CONFLICT RESOLUTION RULES
+
+### Rule 1: First Assignment Wins
+The FIRST time a pin is assigned to a net, that's its permanent net.
+Example:
+- Connection 1: U1.7 → VCC
+- Connection 2: U1.7 → VCC_STARTUP (CONFLICT!)
+- Resolution: U1.7 stays as VCC
+
+### Rule 2: Ground Nets Take Priority
+If conflict involves ground, ground wins:
+- GND > PGND > DC_BUS_NEG > other_grounds
+
+### Rule 3: Power Nets Secondary Priority
+- VCC > VDD > V+ > other_power_nets
+
+### Rule 4: Signal Integrity
+Never change established signal paths, only fix the conflicts.
+
+## COMPONENT CONNECTION RULES
+
+### Must Be Connected:
+- **All IC pins** (except explicit NC)
+- **All resistors** (both pins)
+- **All capacitors** (both pins)
+- **All inductors** (both pins)
+- **All diodes/LEDs** (anode and cathode)
+- **All transistors** (all 3 terminals)
+- **Connectors** (at least ground pin)
+
+### Can Be Removed if Unconnected:
+- **Heatsinks** (HS*)
+- **Mounting holes** (MH*)
+- **Fiducials** (FID*)
+- **Test points** (if mechanical)
+- **Spare components** marked as "spare" or "DNP"
+
+## VALIDATION BEFORE OUTPUT
+
+Your output MUST pass these checks:
+```python
+☐ Every electrical component appears in connections
+☐ Every pin has exactly ONE net assignment
+☐ No duplicate connections
+☐ No conflicting net assignments
+☐ validationStatus shows all true values
+☐ Component count matches actual components
+☐ Connection count matches actual connections
+```
+
+## OUTPUT FORMAT (EXACT STRUCTURE)
+
+```json
+{
+  "moduleName": "string",
+  "moduleType": "string",
+  "components": [
+    {
+      "refDes": "string",
+      "type": "string",
+      "value": "string",
+      "specs": {},
+      "power": "string",
+      "tolerance": "string",
+      "package": "string",
+      "notes": "string"
+    }
+  ],
+  "connections": [
+    {
+      "from": "component.pin",
+      "to": "component.pin",
+      "net": "net_name"
+    }
+  ],
+  "pinNetMapping": {
+    "component.pin": "net_name"
+  },
+  "nets": [
+    {
+      "name": "string",
+      "type": "power/signal/ground",
+      "description": "string",
+      "connectedPins": ["array"]
+    }
+  ],
+  "interfacePoints": {
+    "inputs": [],
+    "outputs": [],
+    "power": []
+  },
+  "validationStatus": {
+    "componentsCount": number,
+    "connectionsCount": number,
+    "uniquePinsCount": number,
+    "netsCount": number,
+    "allPinsConnected": true,
+    "noNetConflicts": true,
+    "pinNetMappingComplete": true,
+    "hasGroundPath": true,
+    "hasPowerPath": true
+  },
+  "notes": ["array of strings"]
+}
+```
+
+## CRITICAL: WHAT YOU MUST NEVER DO
+- ❌ Output text instead of JSON
+- ❌ Leave any net conflicts unresolved
+- ❌ Leave electrical components unconnected
+- ❌ Allow a pin to have multiple nets
+- ❌ Output "I need to see..." messages
+- ❌ Create duplicate connections
+- ❌ Change the basic circuit functionality
+
+## WHAT YOU MUST ALWAYS DO
+- ✅ Process the data from "output" field
+- ✅ Fix ALL net conflicts using first-seen-wins
+- ✅ Connect or remove ALL unconnected components
+- ✅ Output valid JSON only
+- ✅ Ensure 100% valid circuit
+- ✅ Update validationStatus to show perfection
+
+## SUCCESS CRITERIA
+Your output is successful ONLY if:
+1. Zero net conflicts
+2. Zero unconnected electrical components
+3. Zero floating pins
+4. Valid JSON structure
+5. All validation flags are true
+
+Remember: 100% PERFECTION OR FAILURE. No middle ground.
+
+OUTPUT JSON ONLY - NO TEXT!

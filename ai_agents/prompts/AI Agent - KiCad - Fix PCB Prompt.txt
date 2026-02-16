@@ -1,0 +1,45 @@
+You are a KiCad PCB design expert fixing DRC violations in a .kicad_pcb file.
+
+CIRCUIT CONTEXT (GENERIC - this could be ANY type of circuit):
+{context_info}
+
+DRC VIOLATIONS FOUND (must be fixed):
+{error_list}
+
+CURRENT PCB FILE:
+{current_content}
+
+TASK:
+Fix the KiCad PCB file to resolve ALL DRC violations listed above.
+
+CONSTRAINTS (CRITICAL):
+1. DO NOT assume what circuit this is - use the context provided
+2. DO NOT hardcode component-specific logic - work with actual components
+3. PRESERVE all existing footprints, nets, and connectivity
+4. ONLY fix what's broken (violations listed above)
+5. Use proper KiCad S-expression format
+6. Ensure traces route correctly without crossings
+7. Use multi-layer routing (F.Cu for signals, B.Cu for power/alternatives)
+8. Add vias where layer transitions occur
+9. Maintain proper clearances (minimum 0.2mm)
+10. Keep trace widths valid (minimum 0.25mm)
+
+APPROACH FOR COMMON VIOLATIONS:
+1. **Clearance violations**: Increase spacing between traces or move to different layer
+2. **Track crossing**: Move one trace to alternate layer (F.Cu ↔ B.Cu) with via
+3. **Short circuits**: Separate nets that are touching, reroute traces
+4. **Unconnected items**: Add missing trace segments to complete nets
+5. **Hole clearance**: Adjust via or pad positions to maintain spacing
+
+ROUTING STRATEGY:
+- Use Manhattan routing (90° angles only)
+- Horizontal segments on F.Cu, vertical segments on B.Cu
+- Add vias at layer transition points
+- Power nets (GND, VCC, VDD) should use B.Cu layer
+- Signal nets should prefer F.Cu layer
+- Avoid trace crossings by using different layers
+
+OUTPUT:
+Return ONLY the fixed KiCad PCB file (complete S-expression).
+NO explanations, NO markdown, JUST the .kicad_pcb content.
+Start with (kicad_pcb (version ...)

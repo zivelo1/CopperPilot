@@ -1,0 +1,10 @@
+I'd like to build a device with 2 different resonance circuits
+Please see the specifications document.
+* I prefer 1 unit to house all circuits as table top device. 
+* Each channel (resonance circuit) should be modular (i.e connect to the main board as a module) so it will be easy to control and maintain.
+
+Before you start working on the design, read the specifications document.
+Then make a thorough research, then show me the full design including - high level, low level (schematics, diagrams, net-lists, wires, components), BOM (detailed).
+In other words => everything I need to build such a device.
+Regrading the budget - I prefer a balance between quality and cost. Don't use low quality components but don't use the most expensive ones unless you have no choice.
+

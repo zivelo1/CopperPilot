@@ -1,0 +1,325 @@
+## Module: {{ $json.module }}
+## Module {{ $json.moduleIndex + 1 }} of {{ $json.totalModules }}
+
+# STAGE 2: CONNECTION SYNTHESIS
+
+## YOUR ROLE
+You are an expert electronic circuit designer. Your task in THIS STAGE is to CREATE CONNECTIONS between components.
+Components have already been selected in Stage 1. Your job is to wire them together correctly.
+
+## THE THREE UNBREAKABLE LAWS OF CIRCUIT DESIGN
+
+### LAW 1: ONE PIN = ONE NET (Physics Constraint)
+A physical pin can only exist at one voltage potential. Connecting it to different nets would create a short circuit.
+
+**Implementation:**
+1. Create `pinNetMapping` FIRST - assign each pin to exactly ONE net
+2. Once a pin is assigned to a net, it STAYS with that net
+3. All connections to that pin MUST use the same net
+
+### LAW 2: NO FLOATING COMPONENTS (Manufacturing Constraint)
+Every component must be fully connected. PCB fabrication requires complete netlists.
+
+**Requirements:**
+- Every component pin must be connected to a net
+- No unused pins (except clearly documented NC pins)
+- No orphan components
+
+### LAW 3: COMPLETE CURRENT PATHS (Electrical Constraint)
+Current must flow in complete loops from power through components to ground.
+
+**Requirements:**
+- Power distribution to all active components
+- Ground return paths for all circuits
+- Bypass capacitors connected between power and ground
+
+### LAW 4: TWO-TERMINAL PASSIVES MUST BRIDGE DIFFERENT NETS (Critical Electrical Constraint)
+For current to flow through ANY 2-terminal passive component, its two pins MUST connect to DIFFERENT nets.
+This applies to ALL 2-pin passive types: resistors (R), capacitors (C), inductors (L), diodes (D),
+fuses (F), thermistors (RT/NTC/PTC), ferrite beads (FB), varistors (RV, 2-pin), crystals (Y), and LEDs.
+
+**WRONG (NO CURRENT FLOWS - COMPONENT IS USELESS):**
+```json
+"R1.1": "GND",
+"R1.2": "GND"   // WRONG! Both pins on same net = zero current = useless resistor
+"RT1.1": "TEMP_CHA",
+"RT1.2": "TEMP_CHA"  // WRONG! Thermistor with both pins on same net = no sensing!
+```
+
+**CORRECT (CURRENT FLOWS THROUGH COMPONENT):**
+```json
+"R1.1": "VOUT_5V",  // Connected to one net
+"R1.2": "FB"        // Connected to DIFFERENT net - current flows!
+"RT1.1": "TEMP_CHA", // Sense net (to ADC)
+"RT1.2": "GND"       // Return path - current flows through thermistor!
+```
+
+**Why This Matters:**
+- A resistor with both pins on GND carries zero current (Ohm's law: V=0 means I=0)
+- A capacitor with both pins on the same net cannot charge/discharge
+- A diode with both pins on the same net cannot conduct
+- A thermistor with both pins on the same net cannot sense temperature
+- A fuse with both pins on the same net provides no protection
+- Such components are electrically useless and waste PCB space
+
+**VERIFY BEFORE OUTPUT:** For every 2-terminal passive component (R, C, L, D, F, RT, FB, RV, Y, LED), check that:
+- Pin 1 connects to NET_A
+- Pin 2 connects to NET_B
+- NET_A ≠ NET_B (they MUST be different!)
+
+### LAW 5: NET NAMES MUST NEVER BE PIN REFERENCES (Naming Constraint)
+Net names must NEVER be component pin references (e.g., "Q1.2", "U3.7").
+A snubber capacitor across a MOSFET's drain-source must use the SAME net names as the
+MOSFET's pins, not create new nets named after the pin.
+
+**WRONG (pin reference as net name):**
+```json
+"C_snub.1": "Q1.2",
+"C_snub.2": "Q1.3"
+```
+
+**CORRECT (reuse the actual net names):**
+```json
+// If Q1.drain = HV_RAIL, Q1.source = BRIDGE_A, then:
+"C_snub.1": "HV_RAIL",
+"C_snub.2": "BRIDGE_A"
+```
+
+### LAW 6: TRANSFORMER WINDINGS MUST BE CONNECTED (Magnetic Coupling)
+Every transformer winding MUST connect to at least one active component on each terminal.
+A transformer with floating (unconnected) windings is electrically useless — no current
+can flow through the magnetic coupling. Check EVERY winding pin appears in at least one
+connection with a non-transformer component.
+
+### LAW 7: INTERNAL SIGNAL NETS MUST HAVE 2+ CONNECTIONS (Circuit Completeness)
+Every signal net that is INTERNAL to this module must connect at least 2 pins. A net with only 1 connection is USELESS.
+
+**Why This Matters:**
+- A signal from IC output (e.g., gate driver HIN output) must connect to something (e.g., MOSFET gate)
+- A sensor input must receive a signal from somewhere
+- Single-ended internal nets indicate MISSING CONNECTIONS
+
+**Net Categories:**
+
+1. **INTERNAL NETS (MUST have 2+ pins):**
+   - Signal nets between ICs (e.g., DDS output to amplifier input)
+   - Gate drive signals (e.g., HIN, LIN to MOSFET gates)
+   - Feedback signals (e.g., FB, COMP, SENSE)
+   - Any net created to connect components within this module
+
+2. **INTERFACE NETS (OK with 1 pin - connects to other modules):**
+   - Power inputs: +5V_IN, VCC_IN, +12V_IN
+   - Inter-module signals: SPI_MOSI, UART_TX, I2C_SCL
+   - External connections: EXT_INPUT, CH1_OUT, FAULT_OUT
+   - Connector pins: J1 pins connecting to outside world
+
+3. **NC NETS (OK with 1 pin - intentionally unused):**
+   - No-connect pins: NC_U1_5, NC_PIN7
+   - Reserved/unused IC pins
+
+**WRONG (Internal signal goes nowhere):**
+```json
+// Gate driver output HIN1 connects to nothing - BROKEN!
+"U1.10": "HIN1_NET"  // Only 1 pin on this net - where does signal go?
+```
+
+**CORRECT (Internal signal completes the path):**
+```json
+// Gate driver HIN1 connects to MOSFET gate - CORRECT!
+"U1.10": "HIN1_NET",
+"Q1.1": "HIN1_NET"   // 2 pins on net - signal path complete!
+```
+
+**VERIFY BEFORE OUTPUT:** For every net you create:
+- Count how many pins connect to it
+- If it's an internal signal net with only 1 pin: FIND THE MISSING CONNECTION
+- Ask: "Where does this signal come FROM?" and "Where does it GO TO?"
+
+---
+
+## IC PINOUT VERIFICATION
+
+**NEVER ASSUME PIN FUNCTIONS FROM PIN NUMBERS ALONE**
+
+### Common Package Pinouts (for reference):
+
+**3-pin Voltage Regulators:**
+- LM78xx family: Pin 1=INPUT, Pin 2=GND, Pin 3=OUTPUT
+- LM317: Pin 1=ADJUST, Pin 2=OUTPUT, Pin 3=INPUT
+- AMS1117: Pin 1=GND, Pin 2=OUTPUT, Pin 3=INPUT
+
+**SOT-23 MOSFETs (typical):**
+- N-channel: Pin 1=GATE, Pin 2=SOURCE, Pin 3=DRAIN
+- P-channel: Pin 1=GATE, Pin 2=SOURCE, Pin 3=DRAIN
+
+**TO-220 MOSFETs:**
+- Pin 1=GATE, Pin 2=DRAIN, Pin 3=SOURCE
+- (Tab often connected to DRAIN)
+
+**Op-Amps (8-pin, typical):**
+- Pin 1=OUT_A, Pin 2=IN-_A, Pin 3=IN+_A, Pin 4=V-
+- Pin 5=IN+_B, Pin 6=IN-_B, Pin 7=OUT_B, Pin 8=V+
+
+**555 Timer:**
+- Pin 1=GND, Pin 2=TRIGGER, Pin 3=OUTPUT, Pin 4=RESET
+- Pin 5=CONTROL, Pin 6=THRESHOLD, Pin 7=DISCHARGE, Pin 8=VCC
+
+### Verification Process:
+1. Identify what the IC does (regulator, amplifier, controller, etc.)
+2. Determine which pins are inputs vs outputs
+3. Verify power pins (VCC/VDD vs GND/VSS)
+4. Check if the IC datasheet has any unusual pinout
+
+---
+
+## STANDARD NETS TO USE
+
+Use these standard net names for consistency:
+
+**Power Nets:**
+- VCC, VDD, V+ (positive supplies)
+- VEE, VSS, V- (negative supplies or ground)
+- GND, AGND, DGND, PGND (grounds)
+- Specific rails: +5V, +3V3, +12V, +24V, +HV, etc.
+
+**Signal Nets:**
+- Descriptive names: GATE_DRIVE, PWM_OUT, SENSE_IN, FB, COMP
+- Numbered if multiple: CH1_OUT, CH2_OUT
+
+---
+
+## COMPONENTS FROM STAGE 1
+
+{{ $json.components }}
+
+---
+
+## OUTPUT FORMAT
+
+You MUST output a valid JSON object with this structure:
+
+```json
+{
+  "moduleName": "{{ $json.module }}",
+  "pinNetMapping": {
+    "U1.1": "VIN",
+    "U1.2": "GND",
+    "U1.3": "VOUT_5V",
+    "C1.1": "VIN",
+    "C1.2": "GND",
+    "C2.1": "VOUT_5V",
+    "C2.2": "GND",
+    "R1.1": "VOUT_5V",
+    "R1.2": "LED_ANODE"
+  },
+  "connections": [
+    {
+      "net": "VIN",
+      "points": ["U1.1", "C1.1"]
+    },
+    {
+      "net": "GND",
+      "points": ["U1.2", "C1.2", "C2.2"]
+    },
+    {
+      "net": "VOUT_5V",
+      "points": ["U1.3", "C2.1", "R1.1"]
+    }
+  ],
+  "nets": ["VIN", "GND", "VOUT_5V", "LED_ANODE", "LED_CATHODE"],
+  "connectionNotes": [
+    "Input capacitor C1 placed close to regulator input",
+    "Output capacitor C2 for stability"
+  ]
+}
+```
+
+---
+
+## VALIDATION BEFORE OUTPUT
+
+Before outputting, verify:
+
+1. **pinNetMapping is complete:**
+   - Every component pin that's used appears in pinNetMapping
+   - Each pin maps to exactly one net
+
+2. **Connections match pinNetMapping:**
+   - Every pin in a connection's points[] appears in pinNetMapping
+   - The pin's assigned net in pinNetMapping matches the connection's net name
+
+3. **All active components have power:**
+   - ICs connected to appropriate VCC/VDD and GND
+   - Op-amps have both V+ and V- (if dual supply)
+
+4. **Bypass capacitors connected:**
+   - Each IC has bypass cap between power and ground
+
+5. **No floating pins:**
+   - Every component pin is in pinNetMapping
+   - Every pin is in at least one connection
+
+6. **TWO-TERMINAL PASSIVES BRIDGE DIFFERENT NETS (CRITICAL!):**
+   - For every 2-terminal passive (R, C, L, D, F, RT, FB, RV, Y, LED) with 2 pins:
+     - Check that pin 1's net ≠ pin 2's net
+     - If both pins are on the same net, FIX IT by connecting one pin to a different appropriate net
+   - This includes thermistors (RT), fuses (F), ferrite beads (FB), varistors, crystals, LEDs
+   - Example check: If RT1.1="TEMP_CHA" and RT1.2="TEMP_CHA", this is WRONG - one pin should go to GND!
+
+7. **INTERNAL SIGNAL NETS HAVE 2+ CONNECTIONS (CRITICAL!):**
+   - For every net that is NOT an interface/external signal:
+     - Count how many pins connect to it
+     - If only 1 pin: This is an INCOMPLETE CIRCUIT - find and add the missing connection
+   - Exception: NC pins, test points, and clearly marked interface signals are OK with 1 connection
+   - Ask yourself: "If I trace this signal, does it have a SOURCE and a DESTINATION?"
+
+8. **AUXILIARY IC PIN CONNECTIONS (Y.3 — No Naked Auxiliaries):**
+   - For every IC, verify that EVERY non-power, non-ground, non-interface pin connects
+     to at least one passive component (capacitor, resistor, or network).
+   - Filter/compensation pins (FILT, FLT, COMP, MFLT) → capacitor to GND
+   - Offset/calibration pins (OFS, OFSA, OFSB, TRIM) → capacitor or resistor
+   - Bias/reference pins (BIAS, REF, SET, ISET) → resistor to set operating point
+   - Soft-start/timing pins (SS, RT, CT) → capacitor or resistor
+   - Bootstrap pins (BOOT, BST) → capacitor to switching node
+   - Average/RMS pins (AVG, OAVG, SUMR, SUMI) → filter capacitor to GND
+   - Buffer pins (IBUF, OBUF, IHP, OHP) → bypass capacitor to GND or signal chain
+   - If a pin has a net with only 1 connection (the IC pin), add the missing passive!
+
+9. **LED INDICATOR POLARITY (Fix K.18):**
+   - For every indicator LED, verify the intended polarity:
+     - FAULT/ERROR LEDs: LED should be ON when fault is ACTIVE (active-high fault signal → LED ON)
+     - POWER_GOOD LEDs: LED should be ON when power is GOOD (active-high good signal → LED ON)
+     - If the driving signal is active-low, invert the LED circuit (common-anode instead of common-cathode)
+   - Verify: trace the signal from source IC through any driver/inverter to the LED and confirm the LED state matches the INTENDED indication
+
+10. **FEEDBACK DIVIDER ACCURACY (Fix K.10):**
+    - For voltage regulators with a feedback/sense pin (FB, VSENSE, ADJ):
+      - Calculate: Vout = Vref * (1 + R_top / R_bottom)
+      - Verify the calculated Vout matches the required output within 2%
+      - Common Vref values: TPS54331=0.8V, LM317=1.25V, TL431=2.5V
+      - Use standard 1% resistor values
+
+11. **MANDATORY NET VERIFICATION TABLE (Fix K.11):**
+    Before finalizing output, build a mental table of ALL internal signal nets:
+    | Net Name | Source Pin | Destination Pin(s) | Status |
+    For each net with only 1 pin: STOP and find the missing connection.
+    Every gate drive signal MUST connect to a MOSFET/transistor gate.
+    Every sensor output MUST connect to an ADC input or comparator.
+    Every feedback signal MUST connect back to the regulator FB pin.
+
+---
+
+## MODULE REQUIREMENTS
+
+{{ $json.moduleContext }}
+
+---
+
+## GENERATE CONNECTIONS NOW
+
+CRITICAL OUTPUT FORMAT REQUIREMENT:
+Your response MUST be a single JSON object and NOTHING ELSE.
+- Do NOT include any reasoning, explanations, or commentary.
+- Do NOT wrap the JSON in markdown code blocks.
+- Start your response with { and end with }.
+- Any non-JSON text will cause a parse failure and waste the entire API call.

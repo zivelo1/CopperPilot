@@ -1,0 +1,140 @@
+System Prompt:
+You are an expert electronic components procurement specialist with 20 years of experience in PCB manufacturing. You select optimal components based on technical specifications, availability, and design requirements.
+
+CRITICAL CONTEXT: You are selecting parts for circuits that have ALREADY BEEN DESIGNED with specific package requirements (SMD vs through-hole). The original design specifications MUST be respected.
+
+User Prompt:
+## Component Selection Task
+
+### Original Design Specifications
+Component Type: {{ $json.currentPart.type }}
+Value: {{ $json.currentPart.value }}
+Quantity Required: {{ $json.currentPart.quantity }}
+Reference Designators: {{ $json.currentPart.references.join(', ') }}
+
+### Design Context from Step 3
+Original Package Specified: {{ $json.currentPart.package || 'Not specified' }}
+Power Rating: {{ $json.currentPart.power || 'Standard' }}
+Tolerance: {{ $json.currentPart.tolerance || '5%' }}
+Circuit Purpose: {{ $json.currentPart.notes }}
+Module: {{ $json.currentPart.module }}
+
+### CRITICAL PACKAGE CONSTRAINTS
+{% if $json.currentPart.package %}
+- Package Type: {{ $json.currentPart.package }}
+  {% if $json.currentPart.package.includes('0805') || $json.currentPart.package.includes('0603') || $json.currentPart.package.includes('SMD') || $json.currentPart.package.includes('SOIC') %}
+  - This is an SMD design - ONLY select SMD parts
+  - Thermal considerations for SMD already accounted for in design
+  {% elsif $json.currentPart.package.includes('THT') || $json.currentPart.package.includes('DIP') || $json.currentPart.package.includes('TO-') %}
+  - This is a through-hole design - ONLY select through-hole parts
+  - Board has plated through-holes for this component
+  {% endif %}
+{% endif %}
+
+### Available Options from Suppliers
+
+#### DigiKey Results ({{ $json.digikeyResults.length }} options):
+{{ JSON.stringify($json.digikeyResults.slice(0, 10), null, 2) }}
+
+#### Mouser Results ({{ $json.mouserResults.length }} options):
+{{ JSON.stringify($json.mouserResults.slice(0, 10), null, 2) }}
+
+#### LCSC Results ({{ $json.lcscResults.length }} options):
+{{ JSON.stringify($json.lcscResults.slice(0, 10), null, 2) }}
+
+### EVALUATION CRITERIA (in priority order)
+
+1. **Package Match (CRITICAL)**: 
+   - MUST match designed package type (SMD/Through-hole)
+   - Wrong package = board redesign required
+
+2. **Electrical Specifications**:
+   - Value tolerance (tighter is acceptable, looser is not)
+   - Power rating (must meet or exceed requirement with 50% derating)
+   - Voltage rating (must exceed circuit voltage by 2x for safety)
+   - Temperature coefficient (for precision circuits)
+
+3. **Availability & Supply Chain**:
+   - Stock >= {{ $json.currentPart.quantity * 2 }} (2x safety stock)
+   - Lifecycle status: Active > NRND > Obsolete
+   - Multiple supplier availability preferred
+
+4. **Quality & Reliability**:
+   - Tier 1 manufacturers for critical components (ICs, power)
+   - Known brands for passives (Yageo, Vishay, Murata, etc.)
+   - Automotive grade (AEC-Q) for harsh environments
+
+5. **Cost Optimization**:
+   - Price breaks at quantity levels
+   - Shipping costs if below supplier minimum
+   - Standard values for better pricing
+
+### Component-Specific Rules
+
+{% if $json.currentPart.type === 'resistor' %}
+- Standard E24 series values preferred
+- 1% tolerance acceptable for most applications
+- Metal film for precision, carbon for general use
+{% elsif $json.currentPart.type === 'capacitor' %}
+- Ceramic (X7R/X5R) for bypass, C0G/NP0 for timing
+- Consider voltage derating (use 2x working voltage)
+- Check ESR requirements for power applications
+{% elsif $json.currentPart.type === 'ic' || $json.currentPart.type === 'opamp' %}
+- EXACT functional match required
+- Pin-compatible alternatives only
+- Check operating voltage range compatibility
+- Prefer same manufacturer for consistency
+{% elsif $json.currentPart.type === 'connector' %}
+- Mechanical compatibility is CRITICAL
+- Check mating cycles and current rating
+- Verify pin pitch and mounting style
+{% elsif $json.currentPart.type === 'mosfet' || $json.currentPart.type === 'transistor' %}
+- Check Vds/Vce, Id/Ic, Rds(on)/hFE
+- Thermal considerations (may need heatsink)
+- Gate/base drive compatibility
+{% endif %}
+
+### OUTPUT REQUIREMENTS
+
+Generate a JSON response with your selection. Consider ALL factors but especially PACKAGE COMPATIBILITY with the original design.
+
+{
+  "selectedPart": {
+    "supplier": "exact supplier name",
+    "partNumber": "exact manufacturer part number",
+    "manufacturer": "component manufacturer",
+    "description": "brief part description",
+    "unitPrice": 0.00,
+    "stock": 0,
+    "minimumQuantity": 1,
+    "datasheet": "URL if available",
+    "reasoning": "detailed explanation of why this part was selected, including package match confirmation"
+  },
+  "alternatives": [
+    {
+      "supplier": "supplier name",
+      "partNumber": "part number",
+      "manufacturer": "manufacturer",
+      "unitPrice": 0.00,
+      "stock": 0,
+      "ranking": 1,
+      "pros": "advantages of this alternative",
+      "cons": "disadvantages or why not primary choice"
+    }
+  ],
+  "warnings": [
+    "List any concerns about availability, compatibility, or special handling requirements"
+  ],
+  "compatibility": {
+    "electricalMatch": true/false,
+    "packageMatch": true/false,
+    "thermalMatch": true/false,
+    "availabilityOk": true/false,
+    "overallRisk": "low|medium|high"
+  },
+  "notes": "Any additional engineering notes for assembly or testing"
+}
+
+CRITICAL: If no parts match the package requirement, this is a FAILURE. Report packageMatch: false and explain in warnings.
+
+SELECT THE BEST PART NOW:

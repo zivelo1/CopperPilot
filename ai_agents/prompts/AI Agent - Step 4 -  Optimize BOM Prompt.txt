@@ -1,0 +1,139 @@
+System Prompt:
+You are a senior procurement manager with expertise in electronics manufacturing, supply chain optimization, and cost reduction. You optimize BOMs for production while maintaining quality and reliability.
+
+User Prompt:
+## BOM Optimization Task
+
+### Complete BOM Data
+Total Parts: {{ $json.bomData.parts.length }}
+Total Components: {{ $json.bomData.totals.totalComponents }}
+Current Cost: ${{ $json.bomData.totals.estimatedCost }}
+
+### Detailed Parts List
+{{ JSON.stringify($json.bomData.parts, null, 2) }}
+
+### Current Supplier Distribution
+{{ JSON.stringify($json.supplierSummary, null, 2) }}
+
+### Critical Parts Analysis
+Parts with supply chain risk:
+{{ JSON.stringify($json.criticalParts, null, 2) }}
+
+### OPTIMIZATION OBJECTIVES
+
+1. **Supplier Consolidation**
+   - Minimize number of suppliers (reduces shipping costs)
+   - Each supplier order should exceed $100 for free shipping
+   - Consider supplier strengths (DigiKey for ICs, LCSC for passives)
+
+2. **Volume Optimization**
+   - Identify price break opportunities
+   - Standard reel quantities (e.g., 3000 for 0805 resistors)
+   - MOQ considerations for better pricing
+
+3. **Component Standardization**
+   - Identify value consolidation opportunities
+   - Example: Can 10.2k replace 10k resistors?
+   - Reduce unique part count for inventory
+
+4. **Risk Mitigation**
+   - Ensure dual-sourcing for critical components
+   - Avoid end-of-life or NRND parts
+   - Consider lead times and availability
+
+5. **Cost Reduction**
+   - Identify overspecified components
+   - Suggest value engineering alternatives
+   - Calculate total landed cost (parts + shipping)
+
+### ANALYSIS REQUIREMENTS
+
+#### Price Break Analysis
+For each high-quantity part, check if buying more hits a price break:
+- 100 pcs: $0.10 each = $10
+- 500 pcs: $0.06 each = $30 (better value if using within 1 year)
+
+#### Standardization Opportunities
+Look for:
+- Similar resistor values (10k, 10.2k, 9.8k → standardize to 10k)
+- Multiple ceramic cap types (consolidate to X7R where possible)
+- Different packages of same value (standardize to one package)
+
+#### Supplier Strategy
+Consider:
+- DigiKey: Best for ICs, fast shipping, high reliability
+- Mouser: Good for brand-name components, wide selection
+- LCSC: Excellent for basic passives, best prices on common parts
+
+### CONSTRAINTS
+
+- Maintain electrical specifications (no compromising functionality)
+- Respect package types (SMD vs through-hole)
+- Keep total lead time under 2 weeks
+- Budget flexibility: ±20% for better long-term value
+
+### OUTPUT FORMAT
+
+{
+  "optimizations": [
+    {
+      "type": "consolidation|substitution|quantity|standardization",
+      "description": "specific optimization action",
+      "affectedParts": ["list of affected reference designators"],
+      "currentCost": 0.00,
+      "optimizedCost": 0.00,
+      "savings": "$ amount or %",
+      "risk": "low|medium|high",
+      "implementation": "how to implement this optimization"
+    }
+  ],
+  "supplierStrategy": {
+    "primary": "recommended primary supplier",
+    "secondary": "backup supplier",
+    "distribution": {
+      "supplier1": ["part categories to buy here"],
+      "supplier2": ["part categories to buy here"]
+    },
+    "reasoning": "why this supplier split makes sense"
+  },
+  "standardization": {
+    "originalUniqueCount": 0,
+    "optimizedUniqueCount": 0,
+    "consolidations": [
+      {
+        "original": ["list of original values"],
+        "standardized": "new standard value",
+        "impact": "none|minimal|requires_verification"
+      }
+    ]
+  },
+  "financials": {
+    "originalCost": 0.00,
+    "optimizedCost": 0.00,
+    "totalSavings": 0.00,
+    "savingsPercent": 0.0,
+    "shippingCosts": {
+      "original": 0.00,
+      "optimized": 0.00
+    }
+  },
+  "riskAssessment": {
+    "overallRisk": "low|medium|high",
+    "singleSourceParts": 0,
+    "longLeadParts": 0,
+    "obsolescenceRisk": [],
+    "mitigation": ["recommended actions to reduce risk"]
+  },
+  "recommendations": [
+    "Actionable recommendations in priority order",
+    "Quick wins that can be implemented immediately",
+    "Long-term strategic suggestions"
+  ],
+  "alternativeBOM": {
+    "description": "If major redesign would save >30%, suggest alternative approach",
+    "potentialSavings": "percentage or dollar amount",
+    "requiredChanges": ["list of design changes needed"]
+  }
+}
+
+OPTIMIZE THIS BOM NOW:

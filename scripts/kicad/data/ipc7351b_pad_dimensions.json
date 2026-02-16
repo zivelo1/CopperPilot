@@ -1,0 +1,314 @@
+{
+  "_description": "IPC-7351B Compliant Pad Dimensions for SMD Components",
+  "_version": "2.0.0",
+  "_date": "2025-11-25",
+  "_author": "Claude Code (TC #51)",
+  "_source": "IPC-7351B 'Generic Requirements for Surface Mount Design'",
+  "_notes": [
+    "All dimensions in millimeters (mm)",
+    "pad_height MUST be less than (pitch - 0.15mm) for DRC compliance",
+    "Formula for QFP: pad_height = pitch * 0.55 to 0.65",
+    "Minimum clearance between adjacent pads: 0.2mm"
+  ],
+
+  "smd_2pad": {
+    "_description": "2-pad SMD components (resistors, capacitors, diodes)",
+    "_format": "[pad_width, pad_height, center_to_center_spacing]",
+
+    "0201": [0.30, 0.30, 0.50],
+    "0402": [0.50, 0.50, 0.80],
+    "0603": [0.80, 0.95, 1.60],
+    "0805": [1.00, 1.40, 2.00],
+    "1206": [1.15, 1.80, 3.20],
+    "1210": [1.15, 2.70, 3.20],
+    "1812": [1.35, 3.40, 4.60],
+    "2010": [1.25, 2.70, 5.00],
+    "2512": [1.30, 3.40, 6.30],
+
+    "metric_1005": [0.50, 0.50, 0.80],
+    "metric_1608": [0.80, 0.95, 1.60],
+    "metric_2012": [1.00, 1.40, 2.00],
+    "metric_3216": [1.15, 1.80, 3.20],
+    "metric_3225": [1.15, 2.70, 3.20],
+
+    "SOD-123": [0.91, 1.22, 3.94],
+    "SOD-323": [0.60, 0.80, 2.20],
+    "SOD-523": [0.40, 0.60, 1.40],
+    "SOD-923": [0.30, 0.40, 1.00],
+
+    "LED_0603": [0.80, 0.80, 1.60],
+    "LED_0805": [1.00, 1.20, 2.00],
+    "LED_1206": [1.00, 1.60, 3.20]
+  },
+
+  "sot": {
+    "_description": "Small Outline Transistor packages",
+    "_format": "pins, pad_width, pad_height, positions as {pin: [x, y]}",
+
+    "SOT-23": {
+      "pins": 3,
+      "pad_width": 0.60,
+      "pad_height": 1.10,
+      "positions": {
+        "1": [-0.95, 1.10],
+        "2": [-0.95, -1.10],
+        "3": [0.95, 0.0]
+      }
+    },
+    "SOT-23-5": {
+      "pins": 5,
+      "pad_width": 0.60,
+      "pad_height": 1.10,
+      "positions": {
+        "1": [-0.95, 1.30],
+        "2": [-0.95, 0.0],
+        "3": [-0.95, -1.30],
+        "4": [0.95, -0.65],
+        "5": [0.95, 0.65]
+      }
+    },
+    "SOT-23-6": {
+      "pins": 6,
+      "pad_width": 0.60,
+      "pad_height": 1.10,
+      "positions": {
+        "1": [-0.95, 1.30],
+        "2": [-0.95, 0.0],
+        "3": [-0.95, -1.30],
+        "4": [0.95, -1.30],
+        "5": [0.95, 0.0],
+        "6": [0.95, 1.30]
+      }
+    },
+    "SOT-223": {
+      "pins": 4,
+      "pad_width": 0.70,
+      "pad_height": 1.50,
+      "tab_width": 3.30,
+      "tab_height": 2.00,
+      "positions": {
+        "1": [-2.30, -3.15],
+        "2": [0.0, -3.15],
+        "3": [2.30, -3.15],
+        "4": [0.0, 3.15]
+      }
+    }
+  },
+
+  "soic": {
+    "_description": "Small Outline Integrated Circuit packages",
+    "_format": "pins, pitch, row_spacing, pad_width, pad_height",
+
+    "SOIC-8": {
+      "pins": 8,
+      "pitch": 1.27,
+      "row_spacing": 5.40,
+      "pad_width": 0.60,
+      "pad_height": 1.55
+    },
+    "SOIC-14": {
+      "pins": 14,
+      "pitch": 1.27,
+      "row_spacing": 5.40,
+      "pad_width": 0.60,
+      "pad_height": 1.55
+    },
+    "SOIC-16": {
+      "pins": 16,
+      "pitch": 1.27,
+      "row_spacing": 5.40,
+      "pad_width": 0.60,
+      "pad_height": 1.55
+    },
+    "SOIC-16W": {
+      "pins": 16,
+      "pitch": 1.27,
+      "row_spacing": 9.30,
+      "pad_width": 0.60,
+      "pad_height": 2.00
+    }
+  },
+
+  "qfp": {
+    "_description": "Quad Flat Package - CRITICAL: pad_height MUST be < pitch to avoid overlap",
+    "_format": "pins, pitch, body_size, pad_width, pad_height",
+    "_tc51_fix": "2025-11-25: Corrected pad_height values from 1.5mm to IPC-7351B compliant values",
+
+    "LQFP-32_0.8mm": {
+      "pins": 32,
+      "pitch": 0.80,
+      "body_size": 7.0,
+      "pad_width": 0.45,
+      "pad_height": 0.55
+    },
+    "LQFP-44_0.8mm": {
+      "pins": 44,
+      "pitch": 0.80,
+      "body_size": 10.0,
+      "pad_width": 0.45,
+      "pad_height": 0.55
+    },
+    "TQFP-32_0.8mm": {
+      "pins": 32,
+      "pitch": 0.80,
+      "body_size": 7.0,
+      "pad_width": 0.45,
+      "pad_height": 0.55
+    },
+    "TQFP-44_0.8mm": {
+      "pins": 44,
+      "pitch": 0.80,
+      "body_size": 10.0,
+      "pad_width": 0.45,
+      "pad_height": 0.55
+    },
+    "LQFP-48_0.65mm": {
+      "pins": 48,
+      "pitch": 0.65,
+      "body_size": 9.0,
+      "pad_width": 0.35,
+      "pad_height": 0.45
+    },
+    "LQFP-48_0.5mm": {
+      "pins": 48,
+      "pitch": 0.50,
+      "body_size": 7.0,
+      "pad_width": 0.25,
+      "pad_height": 0.30
+    },
+    "LQFP-64_0.5mm": {
+      "pins": 64,
+      "pitch": 0.50,
+      "body_size": 10.0,
+      "pad_width": 0.25,
+      "pad_height": 0.30
+    },
+    "LQFP-100_0.5mm": {
+      "pins": 100,
+      "pitch": 0.50,
+      "body_size": 14.0,
+      "pad_width": 0.25,
+      "pad_height": 0.30
+    },
+    "LQFP-144_0.5mm": {
+      "pins": 144,
+      "pitch": 0.50,
+      "body_size": 20.0,
+      "pad_width": 0.25,
+      "pad_height": 0.30
+    },
+    "TQFP-48_0.5mm": {
+      "pins": 48,
+      "pitch": 0.50,
+      "body_size": 7.0,
+      "pad_width": 0.25,
+      "pad_height": 0.30
+    },
+    "TQFP-64_0.5mm": {
+      "pins": 64,
+      "pitch": 0.50,
+      "body_size": 10.0,
+      "pad_width": 0.25,
+      "pad_height": 0.30
+    },
+    "TQFP-100_0.5mm": {
+      "pins": 100,
+      "pitch": 0.50,
+      "body_size": 14.0,
+      "pad_width": 0.25,
+      "pad_height": 0.30
+    },
+    "LQFP-176_0.4mm": {
+      "pins": 176,
+      "pitch": 0.40,
+      "body_size": 24.0,
+      "pad_width": 0.20,
+      "pad_height": 0.22
+    },
+    "LQFP-208_0.4mm": {
+      "pins": 208,
+      "pitch": 0.40,
+      "body_size": 28.0,
+      "pad_width": 0.20,
+      "pad_height": 0.22
+    }
+  },
+
+  "qfn": {
+    "_description": "Quad Flat No-lead packages",
+
+    "QFN-16_0.65mm": {
+      "pins": 16,
+      "pitch": 0.65,
+      "body_size": 4.0,
+      "pad_width": 0.30,
+      "pad_height": 0.40
+    },
+    "QFN-24_0.5mm": {
+      "pins": 24,
+      "pitch": 0.50,
+      "body_size": 4.0,
+      "pad_width": 0.25,
+      "pad_height": 0.30
+    },
+    "QFN-32_0.5mm": {
+      "pins": 32,
+      "pitch": 0.50,
+      "body_size": 5.0,
+      "pad_width": 0.25,
+      "pad_height": 0.30
+    },
+    "QFN-48_0.5mm": {
+      "pins": 48,
+      "pitch": 0.50,
+      "body_size": 7.0,
+      "pad_width": 0.25,
+      "pad_height": 0.30
+    }
+  },
+
+  "through_hole": {
+    "_description": "Through-hole pad specifications",
+
+    "pin_header_2.54mm": {
+      "pad_diameter": 1.70,
+      "drill": 1.00,
+      "pitch": 2.54
+    },
+    "dip": {
+      "pad_diameter": 1.60,
+      "drill": 0.80,
+      "pitch": 2.54,
+      "row_spacing": 7.62
+    },
+    "default": {
+      "pad_diameter": 1.60,
+      "drill": 0.80
+    }
+  },
+
+  "defaults": {
+    "_description": "Default values when specific package not found",
+
+    "2_pin_smd": {
+      "pad_width": 1.00,
+      "pad_height": 1.40,
+      "shape": "roundrect"
+    },
+    "small_ic_6_pins": {
+      "pad_width": 0.60,
+      "pad_height": 1.10,
+      "shape": "roundrect"
+    },
+    "medium_ic_28_pins": {
+      "pad_width": 0.60,
+      "pad_height": 1.55,
+      "shape": "roundrect"
+    },
+    "large_ic_qfp": {
+      "pad_width": 0.25,
+      "pad_height": 0.30,
+      "shape": "roundrect"
+    }
+  }
+}

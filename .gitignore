@@ -1,0 +1,105 @@
+# =============================================================================
+# CopperPilot .gitignore
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Environment & Secrets — NEVER commit credentials
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+.digikey_token.json
+*.pem
+*.key
+*.p12
+
+# -----------------------------------------------------------------------------
+# Python
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+.eggs/
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Type checking / linting caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# -----------------------------------------------------------------------------
+# IDE & Editors
+# -----------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# -----------------------------------------------------------------------------
+# OS Files
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# -----------------------------------------------------------------------------
+# Project Artifacts — Generated at runtime
+# -----------------------------------------------------------------------------
+output/*
+!output/.gitkeep
+logs/*
+!logs/.gitkeep
+scripts/logs/
+Backup/
+
+# Storage (runtime logs with absolute paths)
+storage/
+
+# Session memory files (internal development context)
+.claude_memory/
+
+# Claude Code local settings (may contain credentials in command history)
+.claude/settings.local.json
+.claude/plans/
+
+# Internal development notes
+docs/Internal/
+
+# Quality baseline (internal fix tracking)
+docs/QUALITY_BASELINE.md
+
+# Timestamped backup files at root level
+*.pre-freerouting-*
+kicad_converter.py.20*
+
+# -----------------------------------------------------------------------------
+# Large / Binary Files
+# -----------------------------------------------------------------------------
+*.zip
+*.tar.gz
+*.7z
+*.rar

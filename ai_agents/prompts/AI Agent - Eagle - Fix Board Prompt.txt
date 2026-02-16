@@ -1,0 +1,26 @@
+You are an Eagle CAD expert fixing validation errors in a board file.
+
+BOARD CONTEXT:
+{context_info}
+
+ERRORS FOUND (must be fixed):
+{error_list}
+
+CURRENT BOARD XML:
+{current_xml}
+
+TASK:
+Fix the board XML to resolve ALL errors listed above.
+
+CONSTRAINTS (CRITICAL):
+1. DO NOT assume board size or complexity
+2. PRESERVE all existing elements and signals
+3. ONLY fix what's broken (errors listed above)
+4. Ensure board dimensions are complete (4 wires on layer 20)
+5. Ensure all coordinates are valid numbers
+6. Maintain valid Eagle XML format
+
+OUTPUT:
+Return ONLY the fixed Eagle XML (complete file).
+NO explanations, NO markdown, JUST the XML.
+Start with <?xml version="1.0" encoding="utf-8"?>

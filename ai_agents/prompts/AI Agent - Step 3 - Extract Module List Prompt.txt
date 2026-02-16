@@ -1,0 +1,165 @@
+High-level design to analyze:
+{{ $json.highLevelText }}
+
+# AI Agent - Extract Module/Circuit List
+
+## Your Role
+Analyze the high-level design and identify PRACTICAL, MANUFACTURABLE modules that balance functionality with assembly complexity for ANY type of electronic circuit.
+
+## Universal Module Extraction Strategy
+
+### ADAPTIVE APPROACH - Analyze the Circuit Type First:
+
+1. **For SIMPLE circuits (moisture sensor, LED blinker, doorbell, timer, etc.):**
+   - Return ONE module: "Main Circuit"
+   - Even if internally complex with many components
+
+2. **For MEDIUM complexity (battery charger, motor controller, IoT device):**
+   - Group into 2-4 PRACTICAL modules based on:
+     - Physical separation needs (high voltage vs low voltage)
+     - Functional independence (can work standalone)
+     - Manufacturing constraints (different PCB technologies)
+
+3. **For COMPLEX multi-function systems:**
+   - Maximum 6-8 modules for practical assembly
+   - Group by major functional domains
+   - Consider what would realistically be separate PCBs
+
+## Universal Grouping Principles
+
+### Ask These Questions:
+1. **Would this realistically be built as separate PCBs?**
+   - If no → combine into one module
+
+2. **Does separation provide real benefit?**
+   - Safety isolation (high voltage from low voltage)
+   - Noise isolation (analog from digital)
+   - Modularity for replacement/upgrade
+   - If no clear benefit → combine
+
+3. **What's the assembly complexity?**
+   - Each module = another PCB to manufacture
+   - Each module = more interconnection cables
+   - Target minimum modules that still make sense
+
+## Module Consolidation Guidelines
+
+### COMBINE these when they're closely related:
+- Power input + conversion + protection → Power Module
+- All control/processing functions → Control Module
+- Related signal chains → Single Module
+- User interface elements → Part of Control Module
+- Monitoring/telemetry → Part of Control Module
+
+### SEPARATE only when necessary:
+- High voltage from low voltage (safety)
+- High power from sensitive signals (noise)
+- Swappable/upgradeable sections
+- Physically distant components
+- Different PCB technology requirements
+
+## Adaptive Examples for Different Circuit Types
+
+### Simple Moisture Sensor:
+```json
+{
+  "circuitName": "Soil Moisture Detector",
+  "moduleType": "single",
+  "modules": ["Main Circuit"]
+}
+
+**IoT Temperature Monitor:**
+{
+  "circuitName": "WiFi Temperature Monitor",
+  "moduleType": "single",
+  "modules": ["Main Circuit"]
+}
+
+**Motor Controller with Display:**
+{
+  "circuitName": "DC Motor Controller",
+  "moduleType": "multi",
+  "modules": [
+    "Power and Motor Drive",
+    "Control and Display"
+  ]
+}
+
+**Battery Management System:**
+{
+  "circuitName": "Lithium Battery BMS",
+  "moduleType": "multi",
+  "modules": [
+    "Power and Charging",
+    "Battery Protection",
+    "Control and Communication"
+  ]
+}
+
+**Multi-Channel System (Amplifier/Driver/etc):**
+{
+  "circuitName": "4-Channel System",
+  "moduleType": "multi",
+  "modules": [
+    "Power Supply",
+    "Control System",
+    "Channel 1 [with specs]",
+    "Channel 2 [with specs]",
+    "Channel 3 [with specs]",
+    "Channel 4 [with specs]"
+  ]
+}
+
+**Complex Test Equipment:**
+{
+  "circuitName": "Automated Test System",
+  "moduleType": "multi",
+  "modules": [
+    "Power Management",
+    "Main Controller",
+    "Signal Generation",
+    "Measurement Frontend",
+    "User Interface",
+    "Safety Interlock"
+  ]
+}
+
+**Decision Tree for Module Count:**
+Start → Is it a basic single-function circuit?
+  YES → 1 module ("Main Circuit")
+  NO ↓
+  
+Does it have distinct high-power and low-power sections?
+  YES → Consider 2-3 modules
+  NO ↓
+  
+Does it have multiple identical channels/units?
+  YES → Control + Power + Individual channels (max 6-8 total)
+  NO ↓
+  
+Does it have clearly independent subsystems?
+  YES → Separate by major function (3-5 modules)
+  NO → Consolidate into 2-3 modules maximum
+  
+**CRITICAL OUTPUT RULES**
+1. Default to FEWER modules - only split when necessary
+2. Maximum practical limit: 6-8 modules for ANY system
+3. Typical range:
+* Simple circuits: 1 module
+* Medium complexity: 2-4 modules
+* High complexity: 4-6 modules
+* Extreme cases: up to 8 modules
+4. Think PRACTICAL - consider actual PCB manufacturing
+5. Be ADAPTIVE - adjust to the specific circuit type
+6. Output ONLY valid JSON
+
+**Output Format**
+{
+  "circuitName": "[Name from design]",
+  "moduleType": "[single|multi]",
+  "modules": [
+    "Module names appropriate to the circuit type"
+  ]
+}
+
+**Remember: The goal is PRACTICAL, BUILDABLE modules that someone can actually assemble, not theoretical functional blocks.**
