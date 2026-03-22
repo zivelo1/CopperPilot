@@ -63,6 +63,23 @@ The KiCad Converter transforms lowlevel JSON circuit descriptions into complete,
 
 **See**: `docs/CHANGELOG.md` for detailed fix history
 
+### Schematic Connectivity Overhaul (March 2026)
+
+**Root Cause**: The chain wire topology (TC #66) created wires between pin stub endpoints to connect pins on the same net. These wires crossed through other components and nets, causing 200+ DRC shorts in complex circuits.
+
+**Fix**: Replaced chain wires with label-per-pin approach. Every pin gets its own global label at its stub endpoint. KiCad connects same-name labels electrically — no physical wire between distant pins needed.
+
+**Multi-Unit Symbol Fix**: Dual op-amps (LM2904, OPA2134, etc.) now generate all units (A, B, power). Previously only unit A was placed, leaving unit B's pins floating and power pins disconnected.
+
+**Post-Processor** (`scripts/kicad/fix_schematic_labels.py`): Optional post-processing step that parses the generated `.kicad_sch` with `sexpdata`, extracts actual symbol pin geometry from `lib_symbols`, and regenerates all labels at the TRUE pin positions. Fixes pin position mismatches between the converter's layout algorithm and KiCad's symbol geometry.
+
+| Metric | Before (Feb 2026) | After (Mar 2026) |
+|--------|-------------------|-------------------|
+| Net short-circuits (DRC) | 5+ per circuit | **0** |
+| ERC errors (complex circuit) | 22 | **6** (pin mapping only) |
+| Multi-unit support | Unit A only | **All units** |
+| KiCad 10 compatible | Not tested | **Verified** |
+
 ### Profiler Method Fix (February 2026)
 
 The KiCad converter's profiler report call has been fixed: `self.profiler.print_report()` was changed to `self.profiler.report()` to match the actual profiler API. This resolves an `AttributeError` that previously caused the converter to fail at the report generation stage.

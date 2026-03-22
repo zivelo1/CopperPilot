@@ -4,6 +4,28 @@ All notable changes to CopperPilot are documented here.
 
 ---
 
+## March 2026 — KiCad Schematic Connectivity Overhaul
+
+### KiCad Converter
+- **Label-per-pin connectivity**: Replaced chain wire topology (which caused cross-net shorts) with individual global labels at every pin's stub endpoint. Each pin gets its own label — KiCad connects electrically by name. Eliminates all wire-crossing DRC violations in schematics.
+- **Multi-unit symbol support**: Dual op-amps and other multi-unit symbols (e.g., LM2904, OPA2134) now generate ALL units (A, B, and power) instead of only unit A. Prevents `missing_unit` and `pin_not_connected` ERC errors.
+- **Power pin mapping from circuit JSON**: Power unit pin-to-net mapping now uses the actual `pinNetMapping` from the circuit JSON as primary source, with guessing as fallback only. Fixes `power_pin_not_driven` errors when circuit uses non-standard power net names (e.g., `V_NEG_15` instead of `GND`).
+- **Duplicate unit prevention**: Fixed power unit being generated twice (once by the all-units loop, once by the legacy power unit code).
+
+### New: Schematic Label Post-Processor (`scripts/kicad/fix_schematic_labels.py`)
+- Standalone post-processor that fixes global label positions using actual KiCad symbol geometry.
+- Parses `lib_symbols` section with `sexpdata` to extract true pin offsets per unit.
+- Calculates pin positions from symbol instance placements (position + rotation + unit).
+- Generates stub wires pointing OUTWARD from symbol body (180° flip from pin angle).
+- Verifies results with `kicad-cli` ERC when available.
+- Generic — works for any circuit topology, any component types.
+
+### KiCad 10 Compatibility
+- Verified output opens in KiCad 10.0.0 (auto-converts from KiCad 9 format).
+- `kicad-cli` ERC/DRC validation tested against KiCad 10.
+
+---
+
 ## February 2026 — Integration Stitching, Auxiliary Passives & Validation
 
 ### Supervisor & Config
