@@ -114,8 +114,13 @@ def extract_instances(data):
 
 
 def calculate_true_pin_positions(pin_defs, instances):
-    """Calculate actual schematic pin positions for all instances."""
-    positions = {}  # "REF.PIN_NUM" -> (x, y, wire_angle)
+    """Calculate actual schematic pin positions for all instances.
+
+    CRITICAL: KiCad symbol definitions use Y-UP coordinate system,
+    but schematics use Y-DOWN. Pin Y-coordinates must be negated
+    before applying instance rotation and translation.
+    """
+    positions = {}  # "REF.PIN_NUM" -> (x, y, outward_stub_angle)
     for inst in instances:
         lib_id = inst['lib_id']
         unit = inst['unit']
@@ -125,12 +130,15 @@ def calculate_true_pin_positions(pin_defs, instances):
         unit_pins = pin_defs[lib_id].get(unit, pin_defs[lib_id].get(1, []))
         for pin_num, _, px, py, pangle in unit_pins:
             angle_rad = math.radians(inst['angle'])
-            rx = px * math.cos(angle_rad) - py * math.sin(angle_rad)
-            ry = px * math.sin(angle_rad) + py * math.cos(angle_rad)
+            # Y-axis inversion: symbol Y-up -> schematic Y-down (negate py)
+            rx = px * math.cos(angle_rad) + py * math.sin(angle_rad)
+            ry = px * math.sin(angle_rad) - py * math.cos(angle_rad)
             ax = round(inst['x'] + rx, 4)
             ay = round(inst['y'] + ry, 4)
-            wire_angle = (pangle + inst['angle']) % 360
-            positions[f"{ref}.{pin_num}"] = (ax, ay, wire_angle)
+            # Pin angle: invert Y, add instance rotation, flip 180 for outward
+            sch_pin_angle = (360 - pangle + inst['angle']) % 360
+            outward_angle = (sch_pin_angle + 180) % 360
+            positions[f"{ref}.{pin_num}"] = (ax, ay, outward_angle)
     return positions
 
 
@@ -203,11 +211,11 @@ def fix_schematic(sch_path, pin_net_map):
             px, py, pangle = true_positions[pin_key]
 
             # Calculate stub endpoint — OUTWARD from symbol body
-            # Pin angle points INTO the symbol; add 180° to point AWAY
-            outward_angle = (pangle + 180) % 360
-            angle_rad = math.radians(outward_angle)
+            # pangle is already the outward angle (computed with Y-inversion + 180° flip)
+            angle_rad = math.radians(pangle)
+            # KiCad schematic: Y increases downward, so use + for sin (not -)
             sx = round(px + stub_length * math.cos(angle_rad), 2)
-            sy = round(py - stub_length * math.sin(angle_rad), 2)
+            sy = round(py + stub_length * math.sin(angle_rad), 2)
 
             # Stub wire
             w_uuid = str(uuid.uuid4())
@@ -223,7 +231,7 @@ def fix_schematic(sch_path, pin_net_map):
 
             # Global label at stub endpoint
             l_uuid = str(uuid.uuid4())
-            label_angle = int(outward_angle) % 360
+            label_angle = int(pangle) % 360
             connectivity_lines.append(f'  (global_label "{net_name}"')
             connectivity_lines.append(f'    (shape input)')
             connectivity_lines.append(f'    (at {sx} {sy} {label_angle})')
@@ -236,6 +244,106 @@ def fix_schematic(sch_path, pin_net_map):
             connectivity_lines.append(f'    )')
             connectivity_lines.append(f'  )')
             label_count += 1
+
+    # Inject PWR_FLAG symbol definition into lib_symbols if not present
+    if 'PWR_FLAG' not in '\n'.join(new_lines):
+        # Find the end of lib_symbols section to inject PWR_FLAG definition
+        pwr_flag_def = '''  (symbol "power:PWR_FLAG"
+    (power)
+    (pin_names (offset 0))
+    (exclude_from_sim no)
+    (in_bom no)
+    (on_board yes)
+    (property "Reference" "#FLG"
+      (at 0 1.905 0)
+      (effects (font (size 1.27 1.27)) (hide yes))
+    )
+    (property "Value" "PWR_FLAG"
+      (at 0 3.81 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Footprint" ""
+      (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (hide yes))
+    )
+    (symbol "PWR_FLAG_0_0"
+      (pin power_out line
+        (at 0 0 90)
+        (length 0)
+        (name "pwr" (effects (font (size 1.27 1.27))))
+        (number "1" (effects (font (size 1.27 1.27))))
+      )
+    )
+  )'''
+        # Find the closing of lib_symbols
+        result_text = '\n'.join(new_lines)
+        lib_sym_end = result_text.find('\n  )\n', result_text.find('(lib_symbols'))
+        if lib_sym_end > 0:
+            new_lines_text = result_text[:lib_sym_end] + '\n' + pwr_flag_def + result_text[lib_sym_end:]
+            new_lines = new_lines_text.split('\n')
+            print(f"  Injected PWR_FLAG symbol definition into lib_symbols")
+
+    # Add PWR_FLAG symbols on power nets to satisfy KiCad's power_pin_not_driven check.
+    # KiCad requires every power input pin to be driven by a power output.
+    # PWR_FLAG is a virtual symbol that marks a net as "driven".
+    power_nets_needing_flag = set()
+    for pin_key, net_name in pin_net_map.items():
+        if pin_key in true_positions:
+            # Check if this is a power pin by looking at the net name
+            net_upper = net_name.upper()
+            is_power = any(kw in net_upper for kw in [
+                'VCC', 'VDD', 'VEE', 'VSS', 'GND', 'V_POS', 'V_NEG',
+                'VBUS', 'VBAT', '+', '-', 'POWER', 'SUPPLY'
+            ])
+            if is_power:
+                power_nets_needing_flag.add(net_name)
+
+    pwr_flag_count = 0
+    for net_name in power_nets_needing_flag:
+        # Find any pin on this net to place the PWR_FLAG nearby
+        for pin_key, pnet in pin_net_map.items():
+            if pnet == net_name and pin_key in true_positions:
+                px, py, _ = true_positions[pin_key]
+                flag_x = round(px + 5.08, 2)  # Offset slightly from pin
+                flag_y = round(py, 2)
+                flag_uuid = str(uuid.uuid4())
+
+                connectivity_lines.append(f'  (symbol')
+                connectivity_lines.append(f'    (lib_id "power:PWR_FLAG")')
+                connectivity_lines.append(f'    (at {flag_x} {flag_y} 0)')
+                connectivity_lines.append(f'    (unit 1)')
+                connectivity_lines.append(f'    (exclude_from_sim yes)')
+                connectivity_lines.append(f'    (in_bom no)')
+                connectivity_lines.append(f'    (on_board no)')
+                connectivity_lines.append(f'    (dnp no)')
+                connectivity_lines.append(f'    (uuid "{flag_uuid}")')
+                connectivity_lines.append(f'    (property "Reference" "#FLG0{pwr_flag_count + 1}"')
+                connectivity_lines.append(f'      (at {flag_x} {flag_y - 2.54} 0)')
+                connectivity_lines.append(f'      (effects (font (size 1.27 1.27)) (hide yes))')
+                connectivity_lines.append(f'    )')
+                connectivity_lines.append(f'    (property "Value" "PWR_FLAG"')
+                connectivity_lines.append(f'      (at {flag_x} {flag_y + 2.54} 0)')
+                connectivity_lines.append(f'      (effects (font (size 1.27 1.27)) (hide yes))')
+                connectivity_lines.append(f'    )')
+                connectivity_lines.append(f'    (property "Footprint" ""')
+                connectivity_lines.append(f'      (at 0 0 0)')
+                connectivity_lines.append(f'      (effects (font (size 1.27 1.27)) (hide yes))')
+                connectivity_lines.append(f'    )')
+                connectivity_lines.append(f'  )')
+
+                # Wire from PWR_FLAG pin to the net
+                pf_wire_uuid = str(uuid.uuid4())
+                connectivity_lines.append(f'  (wire')
+                connectivity_lines.append(f'    (pts (xy {flag_x} {flag_y}) (xy {px} {py}))')
+                connectivity_lines.append(f'    (stroke (width 0) (type default))')
+                connectivity_lines.append(f'    (uuid "{pf_wire_uuid}")')
+                connectivity_lines.append(f'  )')
+
+                pwr_flag_count += 1
+                break  # One PWR_FLAG per net
+
+    if pwr_flag_count > 0:
+        print(f"  Added {pwr_flag_count} PWR_FLAG symbols on power nets")
 
     # Insert before the final closing paren
     result = '\n'.join(new_lines)
